@@ -1,0 +1,16 @@
+Maksym Bondarenko 
+Cergy, 2016
+
+This project will include:
+
+FDM folder:
+- Finite difference methods to solve PDE (Heat equation, BS-equation) with different types of boundary conditions
+
+Calibration folder:
+- Calibration of financial parametres: Implied volatility, Yield
+
+Monte-Carlo folder:
+- Monte-Carlo simulation of random variables to apply in share price simulation and insurance projects
+
+Optimization folder:
+- Numerical Optimization algorithms: Steepest descent, Gradient descent, Newton Algorithm, Newton-Lagrange algorithm (with constraints)
