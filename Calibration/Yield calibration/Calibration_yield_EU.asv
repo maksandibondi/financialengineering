@@ -40,8 +40,8 @@ end
 %% values of Beta
 display(beta);
 
-%% Plotting
+
 for j = 1:sz
     R_hat(j) = beta(1)+beta(2)*((beta(4)/(T(j)-t))*(1-exp(-(T(j)-t)/beta(4))))+beta(3)*((beta(4)/(T(j)-t))*(1-exp(-(T(j)-t)/beta(4)))-exp(-(T(j)-t)/beta(4)));
 end;
-plot(T,R_hat); hold on; scatter(T,R,'r');
+plot(T,R_hat); hold on; 
