@@ -1,9 +1,22 @@
-clear; clc;
+function[] = Calibration_imp_EU(filename,matur)
 
 %% Data reading
-data=dlmread('sp-index.csv',';',1,0);
-% B=csvread('sp-index.dat',1,0);  %the matrix with all the data
-A = data(59:115,:); %the matrix we study  (1:58,:)  (59:115,:)  (116:149,:) (150:171,:) (172:214,:)  (215:237,:)  (238:265,:)  (266:280,:)
+data=dlmread(filename,';',1,0);
+sz = size(data,1);
+
+% Filtering the data with the maturity needed
+startindex = 0; endindex = 0;
+for n = 1:sz
+    if (data(n,1) == matur) && (startindex == 0)
+        startindex = n; endindex = n;
+    elseif (data(n,1) == matur) && (startindex ~= 0)
+        endindex = n;
+    elseif (data(n,1) ~= matur) && (startindex ~= 0)
+        break;
+    end;
+end;
+display(startindex); display(endindex);
+A = data(startindex:endindex,:);
 display(A);
 
 %% Parameters' arrays creation
