@@ -1,43 +1,54 @@
 clear; clc;
 
-%% market data
+%% Market data
 
-R = csvread('rate_R.dat',0,0);
-T = csvread('Maturity_T.dat',0,0);
+R = csvread('rate_R2.csv',0,0);
+T = csvread('Maturity_T2.csv',0,0);
 
 % plot(T,R,'*')
 
-%% initial values
+%% Symbolic calculations
+        syms B1 B2 B3 B4 dT r_ R_h R_m;
+        
+        R_hat_term_1 = B1;
+        R_hat_term_2 = ((B2 * B4)/dT)*(1-exp(-dT/B4));
+        R_hat_term_3 = - B3 * exp(-dT/B4);
+        R_hat_term_4 = ((B3*B4)/dT)*(1-exp(-dT/B4));
+        
+        R_h = R_hat_term_1 + R_hat_term_2 + R_hat_term_3 + R_hat_term_4;
+        r_ = R_m - R_h;
+        % Symbolic derivatives of residual function to minimize
+        drB1 = diff(r_,B1);
+        drB2 = diff(r_,B2);
+        drB3 = diff(r_,B3);
+        drB4 = diff(r_,B4);
+        
+%% Initial values definition
 
-d = [1 1 1 1];
-beta = [-1 1 1 1];
+d = [1 1 1 1]; beta = [-1 1 1 1];
 sz = size(R,1);
-precision = 0.0000001;
 
-t = 0;
-lambda = 1;
+precision = 0.001; t = 2; lambda = 1;
 identity = eye(4,4);
 
-%% Newton algorithm
+%% Newton algorithm for curve calibration
 
 while norm(d) > precision
 
     for p = 1:sz
-        J(p,1) = -1;
-        J(p,2) = -((beta(4)/T(p))*(1-exp(-T(p)/beta(4))));
-        J(p,3) = -(beta(4)/T(p))*(1-exp(-T(p)/beta(4))) + exp(-T(p)/beta(4));
-        J(p,4) = -((beta(2)+beta(3))/T(p))*(1-exp(-T(p)/beta(4))) + (beta(2)+beta(3)*(T(p)/beta(4))+beta(3))*((exp(-T(p)/beta(4)))/beta(4));
+           R_m = R(p); B1 = beta(1); B2 = beta(2); B3 = beta(3); B4 = beta(4);
+           dT = T(p); 
         
-        R_hat = beta(1)+beta(2)*((beta(4)/(T(p)-t))*(1-exp(-(T(p)-t)/beta(4))))+beta(3)*((beta(4)/(T(p)-t))*(1-exp(-(T(p)-t)/beta(4)))-exp(-(T(p)-t)/beta(4)));
-        
-        r(p) = R(p)-(R_hat);
+           J(p,1) = eval(drB1); J(p,2) = eval(drB2); J(p,3) = eval(drB3); J(p,4) = eval(drB4);
+           r(p) = eval(r_);  
     end
-    
+%     display(J);
+%     display(r);
     d = -inv((J'*J)+(lambda.*identity))*J.'*r';
+%     display(d);
+    display(beta);
     beta = beta+d';
 end
-
-%% values of Beta
 display(beta);
 
 %% Plotting
