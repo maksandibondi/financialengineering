@@ -35,6 +35,7 @@ identity = eye(4,4);
 
 while norm(d) > precision
 
+    % Jacobian matrix evaluation
     for p = 1:sz
            R_m = R(p); B1 = beta(1); B2 = beta(2); B3 = beta(3); B4 = beta(4);
            dT = T(p); 
@@ -42,10 +43,8 @@ while norm(d) > precision
            J(p,1) = eval(drB1); J(p,2) = eval(drB2); J(p,3) = eval(drB3); J(p,4) = eval(drB4);
            r(p) = eval(r_);  
     end
-%     display(J);
-%     display(r);
+
     d = -inv((J'*J)+(lambda.*identity))*J.'*r';
-%     display(d);
     display(beta);
     beta = beta+d';
 end

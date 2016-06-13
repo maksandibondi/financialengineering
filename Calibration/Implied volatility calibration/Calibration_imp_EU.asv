@@ -29,7 +29,7 @@ end
 display(S0);
 r = A(1,7)/100; % Rate
 K = A(:,2); % Strike
-% M = (A(:,3)+A(:,4))/2; % Market price data for call
+M = (A(:,5)+A(:,6))/2; % Market price data for p
 M = (A(:,5)+A(:,6))/2; % Market price data for put
 e = 0.0001; % eps
 sz = size(K);
