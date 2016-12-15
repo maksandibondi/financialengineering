@@ -1,4 +1,4 @@
-function [Call,Put] = payoff_asian(T,N,S0,r,sigma,K)
+function [payoff] = payoff_asian(T,N,S0,r,sigma,K)
 
     delta_t = T/N;
     Spath = StockSimulator(T,N,S0,r,sigma);
@@ -11,8 +11,6 @@ for i = 1:N
 end;
 
 %% Payoff calculation
-Call = max(A-K,0);
-Put = max(K-A,0);
-
+payoff = max(A-K,0);
 
 return;

@@ -1,4 +1,4 @@
-function [Call,Put] = payoff_asian_floatingstrike(T,N,S0,r,sigma)
+function [payoff] = payoff_asian_floatingstrike(T,N,S0,r,sigma)
 
     delta_t = T/N;
     Spath = StockSimulator(T,N,S0,r,sigma);
@@ -11,8 +11,6 @@ for i = 1:N
 end;
 
 %% Payoff calculation
-Call = max(A-Spath(end),0);
-Put = max(Spath(end)-A,0);
-
+payoff = max(A-Spath(end),0);
 
 return;

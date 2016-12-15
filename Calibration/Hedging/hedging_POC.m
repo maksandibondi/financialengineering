@@ -7,7 +7,7 @@ t0 = 0;
 T = 5;
 r = 0.05;
 sigma = 0.5;
-K = 1.5;
+K = 1;
 S0 = 1;
 hedge_freq = 10;
 
@@ -24,7 +24,8 @@ for q = 2:1:discretization_num_t
 end;
 
 %% Main   
-[V_call, V_put, P_call, P_put, A_call, A_put, B_call, B_put, PLcall, PLput] = hedging(B_call0, B_put0, t0, T, discretization_num_t, r, sigma, K, S0,hedge_freq);
+%[V_call, V_put, P_call, P_put, A_call, A_put, B_call, B_put, PLcall, PLput] = hedging(B_call0, B_put0, t0, T, discretization_num_t, r, sigma, K, S0,hedge_freq);
+[V_call, V_put, P_call, P_put, A_call, A_put, B_call, B_put, PLcall, PLput] = hedging_exact_repl(t0, T, discretization_num_t, r, sigma, K, S0,hedge_freq);
 
 %% Calculation of D
 
