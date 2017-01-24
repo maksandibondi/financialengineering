@@ -1,13 +1,14 @@
 clear; clc;
 
 theta = 1;
-num_of_iter = 100000;
-set_of_x = -5:0.1:5;
+num_of_iter = 10000;
+set_of_x = -10:0.1:10;
 sz = size(set_of_x,2);
+mu = 0.3;
+sigma = 1;
 
-alpha = normal_distr_reject(theta,num_of_iter);
-alpha2 = -normal_distr_reject(theta,num_of_iter);
-ALPHA = [alpha alpha2];
+
+ALPHA = normal_TCL(num_of_iter,mu,sigma)
 
 EV = mean(ALPHA);
 Var = var(ALPHA);
@@ -19,7 +20,7 @@ for i = 1:sz
     counter_alpha_frequency = 0;
     counter_alpha_density = 0;
     
-    for k = 1:2*num_of_iter
+    for k = 1:num_of_iter
         
         if (i ~= sz)
                 

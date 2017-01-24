@@ -1,4 +1,4 @@
-function [alpha] = normal_distr_reject(theta,num_of_iter)
+function [alpha] = normal_reject(theta,num_of_iter)
 
 %% Generating of U,Y - independent r.v
 k = 1;

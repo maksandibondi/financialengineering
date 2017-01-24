@@ -1,9 +1,8 @@
-function[alpha] = normal_distr_noncentered_TCL(num_of_iter, mu, sigma)
+function[alpha] = normal_TCL(num_of_iter, mu, sigma)
 
 %% Definition of loops' size
 
 num_of_rand = 10000;
-
 
 %% Main program
     
