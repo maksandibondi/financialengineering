@@ -1,6 +1,6 @@
 clear; clc;
 
-num_of_iter = 10000;
+num_of_iter = 100000;
 set_of_x = -3:0.1:3;
 sz = size(set_of_x,2);
 

@@ -10,27 +10,40 @@ end;
 
 if (strcmp(method,'TCL'))
     
-    for i = 1:discretization_num_t
+    W(1) = 0;
+    
+    gaussian = normal_TCL(discretization_num_t,0,1);
+    
+    for i = 2:discretization_num_t
         
-        W(i) = sqrt(t(i))*sum(normal_TCL(i, 0, 1))/sqrt(i);
+      W(i) = sqrt(delta_t)*sum(gaussian(1:i));
+      % W(i) = sqrt(t(i))*sum(gaussian(1:i))/sqrt(i);
         
     end;
  
 elseif (strcmp(method,'Reject'))
     
-    for i = 1:discretization_num_t
+    W(1) = 0;
+
+    gaussian = normal_reject(1,discretization_num_t);
+    
+    for i = 2:discretization_num_t
         
-        W(i) = sqrt(t(i))*sum(normal_reject(1,i))/sqrt(i);
+      % W(i) = sqrt(delta_t)*sum(gaussian(1:i));
+      W(i) = sqrt(t(i))*sum(gaussian(1:i))/sqrt(i);
         
     end;
     
 elseif (strcmp(method,'Polar'))
     
-    for i = 1:discretization_num_t
+    W(1) = 0;
+    
+    gaussian = normal_polar(discretization_num_t);
+    
+    for i = 2:discretization_num_t
         
-    alpha = normal_polar(i); 
-        
-        W(i) = sqrt(t(i))*sum(alpha)/sqrt(i);
+        W(i) = sqrt(delta_t)*sum(gaussian(1:i));
+        % W(i) = sqrt(t(i))*sum(gaussian(1:i))/sqrt(i);
         
     end;
     

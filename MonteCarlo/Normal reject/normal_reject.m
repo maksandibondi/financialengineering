@@ -8,12 +8,14 @@ while k <= num_of_iter
         u(k) = rand();
         
         if u(k)<=exp(-((Y(k)-1)^2)/2)
-            alpha(k) = Y(k);
+            if rand()<0.5
+               alpha(k) = Y(k);
+            else
+               alpha(k) = -Y(k); 
+            end;
             k = k+1;
         end;
-        
-        
-end;
+             
+end;  
 
-    
 return;
