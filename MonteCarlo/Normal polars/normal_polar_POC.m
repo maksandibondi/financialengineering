@@ -1,10 +1,10 @@
 clear; clc;
 
-num_of_iter = 100000;
-set_of_x = -3:0.1:3;
+num_of_iter = 1000000;
+set_of_x = -5:0.1:5;
 sz = size(set_of_x,2);
 
-alpha = normal_polar(num_of_iter);
+alpha = normal_polar(num_of_iter,0,1);
 
 
 EV = mean(alpha);
@@ -40,5 +40,5 @@ for i = 1:sz
 end;
 
 scatter(set_of_x, probability_of_x, 'r');
-hold on;
+figure;
 scatter(set_of_x, density_of_x, 'b');

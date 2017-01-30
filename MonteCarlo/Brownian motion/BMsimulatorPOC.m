@@ -1,6 +1,6 @@
 clear; clc;
 
-T = 0.2;
+T = 10;
 discretization_num_t = 500;
 
 delta_t = T/discretization_num_t;
@@ -11,8 +11,8 @@ end;
 
 hold on;
 
-for k = 1:1000
-  W(:,k) = BMsimulator(T,discretization_num_t,'Reject');
+for k = 1:100
+  W(:,k) = BMsimulator(T,discretization_num_t,'Polar');
   
   plot(t,W(:,k));
 end;

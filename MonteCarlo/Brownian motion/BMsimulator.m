@@ -25,7 +25,7 @@ elseif (strcmp(method,'Reject'))
     
     W(1) = 0;
 
-    gaussian = normal_reject(1,discretization_num_t);
+    gaussian = normal_reject(1,discretization_num_t,0,1);
     
     for i = 2:discretization_num_t
         
@@ -38,7 +38,7 @@ elseif (strcmp(method,'Polar'))
     
     W(1) = 0;
     
-    gaussian = normal_polar(discretization_num_t);
+    gaussian = normal_polar(discretization_num_t,0,1);
     
     for i = 2:discretization_num_t
         

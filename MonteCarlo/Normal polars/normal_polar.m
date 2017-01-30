@@ -1,4 +1,4 @@
-function [alpha] = normal_polar(num_of_iter)
+function [alpha] = normal_polar(num_of_iter,mu,sigma)
 
 
 %% Generating of U,Y - independent r.v
@@ -11,6 +11,7 @@ while k <= num_of_iter
  
         if S < 1 
             alpha(k) = V1*(-2*log(S)/S)^(1/2);
+            alpha(k) = alpha(k)*sigma + mu;
             k = k+1; 
         end;         
         

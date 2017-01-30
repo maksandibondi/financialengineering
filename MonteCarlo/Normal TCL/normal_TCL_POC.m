@@ -1,14 +1,14 @@
 clear; clc;
 
 theta = 1;
-num_of_iter = 10000;
-set_of_x = -10:0.1:10;
+num_of_iter = 1000000;
+set_of_x = -5:0.1:5;
 sz = size(set_of_x,2);
 mu = 0.3;
 sigma = 1;
 
 
-ALPHA = normal_TCL(num_of_iter,mu,sigma)
+ALPHA = normal_TCL(num_of_iter,mu,sigma);
 
 EV = mean(ALPHA);
 Var = var(ALPHA);
@@ -43,5 +43,5 @@ for i = 1:sz
 end;
 
 scatter(set_of_x, probability_of_x, 'r');
-hold on;
+figure;
 scatter(set_of_x, density_of_x, 'b');

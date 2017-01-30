@@ -1,4 +1,4 @@
-function [alpha] = normal_reject(theta,num_of_iter)
+function [alpha] = normal_reject(theta,num_of_iter,mu,sigma)
 
 %% Generating of U,Y - independent r.v
 k = 1;
@@ -13,6 +13,8 @@ while k <= num_of_iter
             else
                alpha(k) = -Y(k); 
             end;
+            
+            Y(k) = Y(k)*sigma + mu;
             k = k+1;
         end;
              

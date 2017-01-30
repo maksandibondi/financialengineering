@@ -1,11 +1,11 @@
 clear; clc;
 
 theta = 1;
-num_of_iter = 100000;
+num_of_iter = 1000000;
 set_of_x = -5:0.1:5;
 sz = size(set_of_x,2);
 
-alpha = normal_reject(theta,num_of_iter);
+alpha = normal_reject(theta,num_of_iter,0,1);
 
 EV = mean(alpha);
 Var = var(alpha);
@@ -40,5 +40,5 @@ for i = 1:sz
 end;
 
 scatter(set_of_x, probability_of_x, 'r');
-hold on;
+figure;
 scatter(set_of_x, density_of_x, 'b');
