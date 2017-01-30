@@ -39,6 +39,14 @@ for i = 1:sz
     
 end;
 
+
 scatter(set_of_x, probability_of_x, 'r');
+xlabel('x'); ylabel('P(X<=x)');
+title('PDF')
+legend('proba distribution function');
+
 figure;
 scatter(set_of_x, density_of_x, 'b');
+xlabel('x'); ylabel('P(X=x)');
+title('DDF')
+legend('density distribution function');

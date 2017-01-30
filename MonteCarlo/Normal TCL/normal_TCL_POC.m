@@ -1,7 +1,7 @@
 clear; clc;
 
 theta = 1;
-num_of_iter = 1000000;
+num_of_iter = 100000;
 set_of_x = -5:0.1:5;
 sz = size(set_of_x,2);
 mu = 0.3;
@@ -43,5 +43,12 @@ for i = 1:sz
 end;
 
 scatter(set_of_x, probability_of_x, 'r');
+xlabel('x'); ylabel('P(X<=x)');
+title('PDF')
+legend('proba distribution function');
+
 figure;
 scatter(set_of_x, density_of_x, 'b');
+xlabel('x'); ylabel('P(X=x)');
+title('DDF')
+legend('density distribution function');

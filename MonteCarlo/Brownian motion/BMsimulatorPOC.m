@@ -11,12 +11,17 @@ end;
 
 hold on;
 
-for k = 1:100
-  W(:,k) = BMsimulator(T,discretization_num_t,'Polar');
-  
+methods = {'Random walk','Polar','Reject','TCL'};
+
+for k = 1:size(methods,2)
+  W(:,k) = BMsimulator(T,discretization_num_t,methods(k));
   plot(t,W(:,k));
 end;
+xlabel('t'); ylabel('W(t)');
+title('Brownian trajectories')
+legend('Random Walk', 'Polar', 'Reject', 'TCL');
 
-EV = mean(W(end,:))
-Var = var(W(end,:))
+%% We use this mean and variance caclul in case of creation of multiple trajectories for one method
+% EV = mean(W(end,:))
+% Var = var(W(end,:))
 

@@ -47,6 +47,24 @@ elseif (strcmp(method,'Polar'))
         
     end;
     
+elseif (strcmp(method,'Random walk'))
+    
+    W(1) = 0;
+    r = rand();
+    x(1) = (r>0.5)*(-1)+(r<=0.5)*(1);
+    for i = 2:discretization_num_t
+        
+        if rand()>0.5
+            x(i) = -1;
+        else
+            x(i) = 1;
+        end;
+        
+        W(i) = sqrt(t(i))*sum(x(1:i))/sqrt(i);
+        % W(i) = sqrt(t(i))*sum(gaussian(1:i))/sqrt(i);
+        
+    end;
+    
 end;
  
 
