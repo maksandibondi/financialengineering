@@ -1,17 +1,17 @@
 clear; clc;
 
 % BS parameters
-S0 = 100;
-mu = 0.04;
-r = 0.02;
-sigma = 0.5;
-T = 0.5; 
-delta_t = 0.005;
-K = 110;
+S0 = 15;
+mu = 0.08;
+r = 0;
+sigma = 0.6;
+T = 1; 
+delta_t = 0.02;
+K = 18;
 
 % Algo parameters
 n = 50; % number of iterations
-Nmc = 200; % total num of paths
+Nmc = 500; % total num of paths
 NpathIter = Nmc/n; % number of paths in one iteration
 
 % creating t-array
@@ -45,28 +45,28 @@ for i = 2:n
   for j = 1:NpathIter
     
     X = BSStockSimulator(S0,mu,sigma,T,delta_t);
-    Pnext = payoff_AM(X(end), K, 'Put');
-    for k = discretization_num_t:1
-
-      F = payoff_AM(X(k), K, 'Put');
+    Pnext = max(payoff_AM(X(end), K, 'Put'),0);
+    for k = discretization_num_t:-1:1
+      F = max(payoff_AM(X(k), K, 'Put'),0);
       C = beta(i-1,k)*F;
-      u(i,j,k) = PathWeight(X(k),K,'Put')*(F^2);
+      u(i,j,k) = PathWeight(X(k), K, 'Put')*(F^2);
       v(i,j,k) = PathWeight(X(k), K, 'Put')*F*exp(-r*delta_t)*Pnext;
       
-      if (F>C)
-        P(j,k) = F;
+      if (F>C) % comparison of exercise F against continuation C
+        P(j,k) = F; % current payoff (exercise)
       else
-        P(j,k) = Pnext*exp(-r*delta_t);
+        P(j,k) = Pnext*exp(-r*delta_t); % discounted payoff from the next period (continuation)
       end;
       
       Pnext = P(j,k);
       U(i,k) = U(i-1,k) + u(i,j,k);
       V(i,k) = V(i-1,k) + v(i,j,k);
-    end;
-    
+   
+   end;
     
   end;
-  PriceContribution(i) = sum(P(:,1));
+  
+  PriceContribution(i) = sum(P(:,1)); % Sum of all paths payoffs at time 1
   beta(i,:) = V(i,:)./U(i,:);
   
   PriceFinal = PriceFinal + IterWeight(i)*PriceContribution(i);
