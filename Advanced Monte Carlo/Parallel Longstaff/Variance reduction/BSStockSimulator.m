@@ -10,7 +10,7 @@ function[S] = BSStockSimulator(S0, mu, sigma, T, delta_t)
  end; 
  
  
- W = BMsimulator(T,discretization_num_t,'Reject'); 
+ W = BMsimulator(T,discretization_num_t,'Polar'); 
  S(1) = S0; 
  for i = 2:discretization_num_t 
      S(i) = S(i-1) + S(i-1)*((mu-(sigma^2)/2)*delta_t+sigma*(W(i)-W(i-1))); 
