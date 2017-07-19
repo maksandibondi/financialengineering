@@ -3,7 +3,7 @@ clear; clc;
 R0 = 0.2;
 a = 0.3;
 b = 0.8;
-sigma = 0.2;
+sigma = 0.004;
 T = 5;
 delta_t = 0.005;
 
