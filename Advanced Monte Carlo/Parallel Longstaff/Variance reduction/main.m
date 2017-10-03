@@ -1,9 +1,9 @@
 clear; clc;
 
 % BS parameters
-S0 = 18;
+S0 = 14;
 r = 0.08;
-sigma = 0.2;
+sigma = 0.1;
 T = 1; 
 delta_t = 0.005;
 K = 18;
