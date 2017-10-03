@@ -1,4 +1,4 @@
-function [V_call, V_put, P_call, P_put, A_call, A_put, B_call, B_put, PLcall, PLput] = hedging(t0, T,discretization_num_t, r, sigma, K, S0,hedge_freq)
+function [V_call, V_put, P_call, P_put, A_call, A_put, B_call, B_put, PLcall, PLput] = hedging_exact_repl(t0, T,discretization_num_t, r, sigma, K, S0,hedge_freq)
 
 %% Variables initialization
 
