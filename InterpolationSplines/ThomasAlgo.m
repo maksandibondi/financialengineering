@@ -6,7 +6,7 @@ n = size(ctrlX,2);
 B = zeros(n-2,1);
 for i = 1:n-2
   B(i) = (ctrlY(i+2)-ctrlY(i+1))/h(i+1) -  (ctrlY(i+1)-ctrlY(i))/h(i);
-endfor;
+end;
 
 
 A = zeros(n-2, n-2);
@@ -19,7 +19,7 @@ for i = 2:n-3
     A(i,i-1) = h(i);
     A(i,i) = 2*(h(i)+h(i+1));
     A(i,i+1) = h(i+1);
- endfor;
+end;
   
   A
   
@@ -30,7 +30,7 @@ d_(1) = B(1) / A(1, 1);
 		for i = 2:n-3 
 			c_(i) = A(i, i + 1) / (A(i, i) - c_(i - 1) * A(i, i - 1));
 			d_(i) = (B(i) - d_(i - 1) * A(i, i - 1)) / (A(i, i) - c_(i - 1) * A(i, i - 1));
-		endfor;
+        end;
     
     
 	d_(n-2) = (B(n-2) - d_(n - 3) * A(n - 2, n - 3)) / (A(n-2, n-2) - c_(n-3) * A(n-2, n - 3));
@@ -40,6 +40,6 @@ d_(1) = B(1) / A(1, 1);
 
 		for i = n-2:-1:2 
 			c(i - 1) = d_(i - 1) - c(i) * c_(i - 1); % c is res
-		endfor;
+        end;
     
     

@@ -16,6 +16,6 @@ elseif (x>=X(m+1) && x<=X(m+2))
   val = (1/6)*(1-a)^3;
 elseif (x>=X(m+2))
   val = 0;
-endif;
+end;
 
  
