@@ -5,19 +5,12 @@ x = rand(11,1); % control points (thetas) sz = n-p-1 = 7 values will be used
 sz = size(x,1);
 p = 4;
 
-%res(101) = x(end);
-
-K = 0:0.1:10;
-%iter = 2;
+K = 0:0.001:10;
 iter = 1;
-for k = 0:0.1:10 % iterate through points where interpolate
+for k = 0:0.001:10 % iterate through points where interpolate
   spl = 0;
   for m = 3:sz-2
-    if (m==3)
-        cspline = 1;
-    else
-        cspline = BSplineCoefUniform(X,k,m);
-    end;
+    cspline = BSplineCoefUniform(X,k,m);
     spl = spl + cspline*x(m);
   end;
   res(iter) = spl;
@@ -34,9 +27,9 @@ plot(K,res);
 X = [0:1:10];
 %res_(1) = x(1);
 %res_(101) = x(end);
-K = 0:0.1:10;
+K = 0:0.001:10;
 iter = 1;
-for k = 0:0.1:10 % iterate through points
+for k = 0:0.001:10 % iterate through points
   spl = 0;
   for m = 1:sz-p-1
     cspline = BSplineCoefDeBoor(X,m,p,k);

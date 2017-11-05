@@ -36,7 +36,7 @@ b = [b_' b_(sz-1)];
 
 
 
-x = [0:0.1:6];
+x = [0:0.1:5];
 iter = 1;
 
 for k = 1:n-1 % iterator through knot intervals
@@ -52,4 +52,4 @@ end;
 size(x)
 size(S)
 
-plot(x(1:41),S(1:41));
+plot(x(1:50),S(1:50));

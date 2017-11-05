@@ -2,6 +2,7 @@ clear; clc;
 T = [0:0.125:0.5];
 logK = [-5.29:((5.29+5.29)/53):5.29]; % axis [-log(k); log(k)]
 knots = [-5.29:((5.29+5.29)/5):5.29]; % interpolating knots (each form M-4 knots has corresponding control point theta)
+
 discretization_num_K = 54;
 
 
