@@ -24,7 +24,7 @@ end;
 
 
 T0 = 1000;
-t = 0.05;
+t = 0.07;
 Nmc = 2^14;
 M = 64;
 popsize = 20;
@@ -123,3 +123,4 @@ figure;
 surf(K,T,Z);
 hold on;
 surf(K,T,ones(size(T,2),size(K,2))*0.2, 'FaceColor', [1 0 1]);
+xlabel('K'); ylabel('T'); zlabel('sigma(K,T)');
