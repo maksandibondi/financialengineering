@@ -12,8 +12,11 @@
 % Verifications: does local vol "explain" std deviation
 % Verifications: does local vol predicts well new local vol
 
-addpath('../','-end');
 addpath('../parser','-end');
+addpath('../pricing','-end');
+addpath('../interpolation', '-end');
+addpath('../utils', '-end');
+
 
 clear;
 [K, T, S, Vmarket, VolImp] = parseCBOE('../../../resources/UnderlyingOptionsEODCalcs_2018-11.csv', '^VIX', '2018-11-15', 'C');

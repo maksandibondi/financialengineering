@@ -1,4 +1,4 @@
-function[K, T, S, Vmarket, VolImp] = parseCBOE(filename, symbol, quoteDate, optionType)
+function[K, T_numeric, S, Vmarket, VolImp] = parseCBOE(filename, symbol, quoteDate, optionType)
 
 % Input filename, symbol (VIX), quoteDate (every date on which calculate
 % vol), optionType = C
@@ -18,6 +18,7 @@ workTable = allData(rows, vars); % Filtered table of values for given quoted dat
 T_non_filtered = allData(rows, 'expiration');
 T = cell2mat(table2array(unique(T_non_filtered)));
 numOfT = size(T,1);
+T_numeric = daysact(quoteDate, T)/365;
 display(numOfT);
 
 %% Select strike values and do uniform grid 

@@ -16,7 +16,7 @@ discretization_num_K = size(K,1);
 discretization_num_T = size(T,1);
 
 T0 = 1000;
-t = 0.05;
+t = 0.03;
 Nmc = 2^14;
 M = 64;
 popsize = 20;
@@ -25,15 +25,19 @@ popsize = 20;
 %% Simulation of market data
 prices = Vmarket;
 
-%% Nonuniform discretization grid(the same as in the pricer)
-delta_log_K = (log(K_l) - log(K_0)) / (discretization_num_K+3); % discr .. K + 3
-y = zeros(1,discretization_num_K+2);
-y_0 = log(S);
-for i = 2:discretization_num_K+2
-	y(i) = 0.5*log((log(K_l) + log(K_0)+i*delta_log_K) / (log(K_l) - (log(K_0) + i*delta_log_K))) + y_0; 
-end;
+% %% Nonuniform discretization grid(the same as in the pricer)
+% delta_log_K = (log(K_l) - log(K_0)) / (discretization_num_K+3); % discr .. K + 3
+% y = zeros(1,discretization_num_K+2);
+% y_0 = log(S);
+% for i = 2:discretization_num_K+2
+% 	y(i) = 0.5*log((log(K_l) + log(K_0)+i*delta_log_K) / (log(K_l) - (log(K_0) + i*delta_log_K))) + y_0; 
+% end;
 
-ptsToEvalK = exp(y(1:end-1)) % size = discretization_num_K+1
+%% Non uniform discretiztion
+% creates non-uniform grid including points K_0, K_l. other values will be
+% interpolated later
+%ptsToEvalK = createNonUniformGridAroundSpot(K_l, K_0, discretization_num_K, S, 'sin', 6);
+ptsToEvalK = transp(K(:,1));
 iter = 0;
 
 %% Algo
@@ -42,24 +46,22 @@ for k = 1:Nmc
 for n = 1:popsize
 disc_T = 5; disc_K = 20;
 if (k == 1)
-%ctrlpts = rand(disc_T+1,disc_K+1-4);
 ctrlpts = rand(disc_T+1,disc_K+1);
-sigmaaa = SplineLinear2DInterpol(T_0,T_l,K_0,K_l,disc_T, disc_K,ptsToEvalK,T, ctrlpts);
-%sigmaaa = ones(discretization_num_T+1,discretization_num_K+1)*0.1;
 %Spline evaluated at the points at which our non-uniform discretization is
 % done. How to give it the size 31*198 as well?
 else
-ctrlpts(:,:) = ctr(n,:,:);
-sigmaaa = SplineLinear2DInterpol(T_0,T_l,K_0,K_l,disc_T, disc_K,ptsToEvalK,T, ctrlpts);    
+ctrlpts(:,:) = ctr(n,:,:);   
 end;
+% We have to get interpolated sigma by 6*21 in 10*61 points to eval
+sigmaaa = SplineLinear2DInterp(T_0,T_l,K_0,K_l,disc_T, disc_K, ptsToEvalK, T, ctrlpts);
 
 %% Pricing
-[u(n,:,:),K,T] = Pricer(sigmaaa, K_0, K_l, T_0, T_l, discretization_num_K, discretization_num_T, S, r);
+u(n,:,:) = Pricer_dupire(sigmaaa, K, T, discretization_num_K, discretization_num_T, S, r);
 
 
 
 %fitness(n) = sumOfSqrDif(u(n,10:20,96:104),prices(n,10:20,96:104)); % cost
-fitness(n) = sumOfSqrDif(u(n,:,:), prices(n,:,:)); % cost
+fitness(n) = sumOfSqrDif_(u(n,:,:), prices(:,:)); % cost
 
 sig(n,:,:) = sigmaaa;
 ctr(n,:,:) = ctrlpts;
@@ -67,7 +69,7 @@ end;
 
 %% Genetic part
     [minfitness, index_best] = min(fitness);
-    if (minfitness>15)
+    if (minfitness>0.8)
         T_ = T0*(1-k*(mod(k,M)==0)/Nmc)^4;
     
         % Selection
@@ -82,7 +84,7 @@ end;
             end;
         end;
     
-        % Mutation ( applied independently to all ctrl points)
+        % Mutation ( applied independently to all ctrl points (6*21))
         for n = 1:popsize
         sz2 = size(ctr,2);
         sz3 = size(ctr,3);
