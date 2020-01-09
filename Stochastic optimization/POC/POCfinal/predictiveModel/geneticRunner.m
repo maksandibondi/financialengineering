@@ -1,4 +1,4 @@
-function [] = geneticRunner(K, T, S, r, Vmarket, VolImp)
+function [] = geneticRunner(K, T, S, r, Vmarket, VolImp, discretizationType)
 % Troubles:
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 2) The same non-uniform discetization to be used for market data
@@ -16,7 +16,7 @@ discretization_num_K = size(K,1);
 discretization_num_T = size(T,1);
 
 T0 = 1000;
-t = 0.03;
+t = 0.05;
 Nmc = 2^14;
 M = 64;
 popsize = 20;
@@ -44,32 +44,31 @@ iter = 0;
 for k = 1:Nmc
 
 for n = 1:popsize
-disc_T = 5; disc_K = 20;
+disc_T = 5; disc_K = 25;
 if (k == 1)
-ctrlpts = rand(disc_T+1,disc_K+1);
+ctrlpts = rand(disc_T,disc_K);
 %Spline evaluated at the points at which our non-uniform discretization is
 % done. How to give it the size 31*198 as well?
 else
 ctrlpts(:,:) = ctr(n,:,:);   
 end;
 % We have to get interpolated sigma by 6*21 in 10*61 points to eval
-sigmaaa = SplineLinear2DInterp(T_0,T_l,K_0,K_l,disc_T, disc_K, ptsToEvalK, T, ctrlpts);
+sigmaaa = SplineLinear2DInterp(T_0,T_l,K_0,K_l,S,disc_T, disc_K, ptsToEvalK, T, ctrlpts);
 
 %% Pricing
-u(n,:,:) = Pricer_dupire(sigmaaa, K, T, discretization_num_K, discretization_num_T, S, r);
-
+u(n,:,:) = Pricer_dupire(sigmaaa, K, T, discretization_num_K, discretization_num_T, S, r, discretizationType);
 
 
 %fitness(n) = sumOfSqrDif(u(n,10:20,96:104),prices(n,10:20,96:104)); % cost
-fitness(n) = sumOfSqrDif_(u(n,:,:), prices(:,:)); % cost
+fitness(n) = sumOfSqrDif_(u(n,:,:), prices(:,:)); % cost funtion for n-th member of population
 
-sig(n,:,:) = sigmaaa;
+sig(n,:,:) = sigmaaa; 
 ctr(n,:,:) = ctrlpts;
 end;
 
 %% Genetic part
     [minfitness, index_best] = min(fitness);
-    if (minfitness>0.8)
+    if (minfitness>0.3)
         T_ = T0*(1-k*(mod(k,M)==0)/Nmc)^4;
     
         % Selection

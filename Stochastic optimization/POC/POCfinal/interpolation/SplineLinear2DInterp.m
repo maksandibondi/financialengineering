@@ -1,15 +1,16 @@
-function [out] = SplineLinear2DInterp(T_0,T_l,K_0,K_l,disc_T,disc_K,ptsToEvalK,ptsToEvalT, ctrlpts)
+function [out] = SplineLinear2DInterp(T_0,T_l,K_0,K_l, S, disc_T,disc_K,ptsToEvalK,ptsToEvalT, ctrlpts)
 
-delta_k = (K_l-K_0)/disc_K;
+%delta_k = (K_l-K_0)/disc_K;
 delta_t = (T_l-T_0)/disc_T;
-knots = K_0:delta_k:K_l;
-order = 4;
+%knots = K_0:delta_k:K_l;
+%order = 4;
 ptsToEvalT = transp(ptsToEvalT);
 
+knots = getNonUniformKnots(K_0, K_l, S, disc_K); 
 %% B-spline part (K-discretization)
 % We evaluate sigma(:,K) in 61 points using spline interpolation and 21 ctrl point by K. have
 % to fill zeros with values as well. we obtain sigma(6*62) matrix
-for i = 1:disc_T+1
+for i = 1:disc_T
     sigma(i,:) = interp1(knots, ctrlpts(i,:), ptsToEvalK);
     %sigma(i,:) = Bspline(knots,ctrlpts(i,:), order, ptsToEvalK);
 end;

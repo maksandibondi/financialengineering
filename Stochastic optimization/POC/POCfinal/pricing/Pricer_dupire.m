@@ -1,4 +1,4 @@
-function[u] = Pricer_dupire(sigma,K,T, discretization_num_K, discretization_num_T, S, r)
+function[u] = Pricer_dupire(sigma,K,T, discretization_num_K, discretization_num_T, S, r, discretizationType)
 
 %% Discretization setting
 delta_k = (K(end)-K(1))/discretization_num_K;
@@ -14,7 +14,7 @@ for i = 1:discretization_num_T %+1
 end;
 
 %% Filling the matrix of parameters alpha, beta, gamma
-[alpha beta gamma] = FillAlphaBetaGamma(sigma,r,K,discretization_num_K+1,S); 
+[alpha, beta, gamma] = FillAlphaBetaGamma(sigma,r,K,discretization_num_K,S, discretizationType); 
 
 %% Pricing
 for n = 1:discretization_num_T-1
