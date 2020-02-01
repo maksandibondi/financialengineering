@@ -16,27 +16,38 @@ discretization_num_K = size(K,1);
 discretization_num_T = size(T,1);
 
 T0 = 1000;
-t = 0.05;
+t = 0.07;
 Nmc = 2^14;
 M = 64;
 popsize = 20;
+
 
 if (strcmp(discretizationType, 'uniform'))
     ptsToEvalK = transp(K(:,1));
 else 
     %% Nonuniform discretization grid(the same as in the pricer)
-%     delta_log_K = (log(K_l) - log(K_0)) / (discretization_num_K); % discr .. K + 3
-%     y = zeros(1,discretization_num_K+1);
-%     y_0 = log(S);
-%     for i = 2:discretization_num_K+1
-%         y(i) = 0.5*log((log(K_l) + log(K_0)+i*delta_log_K) / (log(K_l) - (log(K_0) + i*delta_log_K))) + y_0; 
-%     end;
-
+    ymax = log(K_l);
+    ymin = -ymax;
+    y_0 = log(S);
+    h = 2*ymax/(discretization_num_K+1);
+    for i = 1:discretization_num_K+1
+         y(i) = gfunc(-ymax+i*h, ymax, y_0); 
+    end;
+    ptsToEvalK = exp(y(1:end-1));
     %% Non uniform discretiztion
     % creates non-uniform grid including points K_0, K_l. other values will be
     % interpolated later
-    %ptsToEvalK = createNonUniformGridAroundSpot(K_l, K_0, discretization_num_K, S, 'sin', 6);
-    ptsToEvalK = getNonUniformKnots(K_0, K_l, S, discretization_num_K);
+    %ptsToEvalK = createNonUniformGridAroundSpot(K_l, K_0, discretization_num_K, S, 'log', 6);
+    %ptsToEvalK = getNonUniformKnots(K_0, K_l, S, discretization_num_K);
+end
+
+%% Getting non uniform market prices
+if (~strcmp(discretizationType, 'uniform'))
+    knotsK = transp(K(:,1));%getNonUniformKnots(0, K_l*10, S, discretization_num_K);
+    for i = 1:discretization_num_T
+        Vmarket_temp(i,:) = interp1(knotsK, Vmarket(i,:), ptsToEvalK, 'linear' ,'extrap');
+    end;
+    Vmarket = Vmarket_temp;
 end
 
 
@@ -46,7 +57,7 @@ iter = 0;
 for k = 1:Nmc
 
     for n = 1:popsize
-        disc_T = 5; disc_K = 25;
+        disc_T = 6; disc_K = 10;
         if (k == 1)
         ctrlpts = rand(disc_T,disc_K);
         %Spline evaluated at the points at which our non-uniform discretization is
@@ -55,14 +66,13 @@ for k = 1:Nmc
         ctrlpts(:,:) = ctr(n,:,:);   
         end;
         % We have to get interpolated sigma by 6*21 in 10*61 points to eval
-        sigmaaa = SplineLinear2DInterp(T_0,T_l,K_0,K_l,S,disc_T, disc_K, ptsToEvalK, T, ctrlpts);
+        sigmaaa = SplineLinear2DInterp(T_0,T_l,K_0,K_l,S,disc_T, disc_K, ptsToEvalK, T, ctrlpts, discretizationType);
 
         %% Pricing
         u(n,:,:) = Pricer_dupire(sigmaaa, K, T, discretization_num_K, discretization_num_T, S, r, discretizationType, ptsToEvalK);
 
-
         %fitness(n) = sumOfSqrDif(u(n,10:20,96:104),prices(n,10:20,96:104)); % cost
-        fitness(n) = sumOfSqrDif_(u(n,:,:), Vmarket(:,:)); % cost funtion for n-th member of population
+        fitness(n) = sumOfSqrDif_(u(n,:,:), Vmarket(:,:), S, K); % cost funtion for n-th member of population
 
         sig(n,:,:) = sigmaaa; 
         ctr(n,:,:) = ctrlpts;
@@ -70,7 +80,7 @@ for k = 1:Nmc
 
     %% Genetic part
         [minfitness, index_best] = min(fitness);
-        if (minfitness>0.3)
+        if (minfitness>7)
             T_ = T0*(1-k*(mod(k,M)==0)/Nmc)^4;
 
             % Selection
@@ -116,5 +126,20 @@ Z = squeeze(sig(index_best,:,:));
 figure;
 surf(K,T,Z);
 hold on;
-surf(K,T,ones(size(T,2),size(K,2))*0.6, 'FaceColor', [1 0 1]);
 xlabel('K'); ylabel('T'); zlabel('sigma(K,T)');
+figure;
+hold on;
+
+plot(T,sig(index_best,:,9),'g');
+plot(T,sig(index_best,:,10), 'r');
+plot(T,sig(index_best,:,11), 'b');
+plot(T,sig(index_best,:,12), 'o');
+
+
+
+hold on;
+figure;
+surf(K,T,squeeze(u(n,:,:)));
+hold on;
+%surf(K,T,ones(size(T,2),size(K,2))*0.6, 'FaceColor', [1 0 1]);
+xlabel('K'); ylabel('T'); zlabel('u(K,T)');

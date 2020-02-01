@@ -20,4 +20,4 @@ addpath('../utils', '-end');
 
 clear;
 [K, T, S, Vmarket, VolImp] = parseCBOE('../../../resources/UnderlyingOptionsEODCalcs_2018-11.csv', '^VIX', '2018-11-15', 'C');
-geneticRunner(K, T, S, 0, Vmarket, VolImp, 'nonuniform');
+geneticRunner(K, T, S, 0, Vmarket, VolImp, 'uniform');

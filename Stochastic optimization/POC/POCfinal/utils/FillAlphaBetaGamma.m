@@ -1,4 +1,4 @@
-function [alpha, beta, gamma] = FillAlphaBetaGamma(sigma, r, K, discretization_num_K, S, discretizationType,ptsToEvalK)
+function [alpha, beta, gamma] = FillAlphaBetaGamma(sigma, r, K, discretization_num_K, S, discretizationType, ptsToEvalK)
 
 d1 = size(sigma,1); % discretization_num_T
 d2 = size(sigma,2); % discretization_num_K
@@ -25,17 +25,14 @@ d2 = size(sigma,2); % discretization_num_K
         return;
     
     else
-
-            delta_log_K = (log(K(end)) - log(K(1))) / (discretization_num_K); %+2);
-           
-            
-            y = zeros(1,d2);
-            y(1) = log(S);   
-            for i = 2:d2+1
-                y(i) = 0.5*log((log(K(end)) + log(K(1))+i*delta_log_K) / (log(K(end)) - (log(K(1)) + i*delta_log_K))) + y(1); 
-            end;
-            %m = log(K(1))+20*delta_log_K
-            %log(K(end))
+                
+                ymax = log(K(end));
+                ymin = -ymax;
+                y_0 = log(S);
+                h = 2*ymax/(discretization_num_K+1);
+                for i = 1:discretization_num_K+1
+                     y(i) = gfunc(-ymax+i*h, ymax, y_0); 
+                end;
 
             % matrix h_i
             h = zeros(d1,d2);
