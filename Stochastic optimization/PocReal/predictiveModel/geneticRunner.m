@@ -7,7 +7,7 @@ discretization_num_K = size(K,1);
 discretization_num_T = size(T,1);
 
 T0 = 1000;
-t = 0.09;
+t = 0.1;
 Nmc = 2^14;
 M = 64;
 popsize = 20;
@@ -52,10 +52,10 @@ for k = 1:Nmc
         sigmaaa = SplineLinear2DInterp(T_0,T_l,K_0,K_l,S,disc_T, disc_K, ptsToEvalK, T, ctrlpts, discretizationType);
 
         %% Pricing
-        u(n,:,:) = Pricer_dupire(sigmaaa, K, T, discretization_num_K, discretization_num_T, S, r, discretizationType);
+        u(n,:,:) = Pricer_dupire(sigmaaa, ptsToEvalK, T, discretization_num_K, discretization_num_T, S, r, discretizationType);
 
         %fitness(n) = sumOfSqrDif(u(n,10:20,96:104),prices(n,10:20,96:104)); % cost
-        fitness(n) = sumOfSqrDif_(u(n,:,:), Vmarket(:,:), S, K); % cost funtion for n-th member of population
+        fitness(n) = sumOfSqrDif_(u(n,:,:), Vmarket(:,:), S, ptsToEvalK); % cost funtion for n-th member of population
 
         sig(n,:,:) = sigmaaa; 
         ctr(n,:,:) = ctrlpts;
@@ -63,7 +63,7 @@ for k = 1:Nmc
 
     %% Genetic part
         [minfitness, index_best] = min(fitness);
-        if (minfitness>0.1)
+        if (minfitness>0.3)
             T_ = T0*(1-k*(mod(k,M)==0)/Nmc)^4;
 
             % Selection
@@ -111,26 +111,26 @@ end;
 %% Draw sigma best
 Z = squeeze(sig(index_best,:,:));
 figure;
-surf(K,T,Z);
+surf(ptsToEvalK,T,Z);
 hold on;
 xlabel('K'); ylabel('T'); zlabel('sigma(K,T)');
 
 %% Draw diff of local vol obtained with implied vol
 Z = squeeze(sig(index_best,:,:)) - VolImp;
 figure;
-surf(K,T,Z);
+surf(ptsToEvalK,T,Z);
 hold on;
-surf(K,T,zeros(discretization_num_T,discretization_num_K), 'FaceColor', [1 0 1]);
+surf(ptsToEvalK,T,zeros(discretization_num_T,discretization_num_K), 'FaceColor', [1 0 1]);
 xlabel('K'); ylabel('T'); zlabel('sigma(K,T)');
 
 
 %% Draw diff of market and obtained prices
 figure;
-surf(K(5:17),T,(squeeze(u(index_best,:,5:17)) - Vmarket(:,5:17))./Vmarket(:,5:17));
+surf(ptsToEvalK(29:33),T,(squeeze(u(index_best,:,29:33)) - Vmarket(:,29:33))./Vmarket(:,29:33));
 hold on;
 xlabel('K'); ylabel('T'); zlabel('(u(K,T) - Vmarket(K,T))/Vmarket');
 
 
 figure;
-surf(K,T,squeeze(u(index_best,:,:)));
+surf(ptsToEvalK,T,squeeze(u(index_best,:,:)));
 hold on;

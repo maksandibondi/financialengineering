@@ -25,7 +25,7 @@ if (strcmp(discretizationType, 'uniform'))
 else
      for i = 1:disc_T
         %sigma(i,:) = interp1(knots,ctrlpts(i,:), ptsToEvalK, 'spline'); 
-        order = 4;
+        order = 5;
         sigma_temp(i,:) = Bspline(knotsK,ctrlpts(i,:), order, ptsToEvalK);
         %sigma_temp(i,:) = interp1(knotsK, ctrlpts(i,:), ptsToEvalK, 'linear', 'extrap');
     end;

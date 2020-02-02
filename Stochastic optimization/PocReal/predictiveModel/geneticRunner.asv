@@ -7,7 +7,7 @@ discretization_num_K = size(K,1);
 discretization_num_T = size(T,1);
 
 T0 = 1000;
-t = 0.05;
+t = 0.09;
 Nmc = 2^14;
 M = 64;
 popsize = 20;
@@ -19,6 +19,7 @@ if (strcmp(discretizationType, 'uniform'))
 else 
     %% Nonuniform discretization grid(the same as in the pricer)
     [ptsToEvalK, ~] = createNonUniformGridAroundSpot(K_l, K_0, discretization_num_K, S, 'log');
+    %[ptsToEvalK, ~] = createNonUniformGridAroundSpot(K_l, K_0, discretization_num_K, S, 'user');
 end
 
 %% Getting non uniform market prices by interpolating uniform if needed
@@ -37,8 +38,9 @@ iter = 0;
 for k = 1:Nmc
 
     for n = 1:popsize
-        disc_T = 6; disc_K = 20;
+        disc_T = 6; disc_K = 10;
         if (k == 1)
+            %ctrlpts = squeeze(VolImp(1:disc_T, 1:disc_K)); %% if we want a good seed as implied vol
             ctrlpts = rand(disc_T,disc_K);
             %Spline evaluated at the points at which our non-uniform discretization is
             % done. How to give it the size 31*198 as well?
@@ -50,10 +52,10 @@ for k = 1:Nmc
         sigmaaa = SplineLinear2DInterp(T_0,T_l,K_0,K_l,S,disc_T, disc_K, ptsToEvalK, T, ctrlpts, discretizationType);
 
         %% Pricing
-        u(n,:,:) = Pricer_dupire(sigmaaa, K, T, discretization_num_K, discretization_num_T, S, r, discretizationType);
+        u(n,:,:) = Pricer_dupire(sigmaaa, ptsToEvalK, T, discretization_num_K, discretization_num_T, S, r, discretizationType);
 
         %fitness(n) = sumOfSqrDif(u(n,10:20,96:104),prices(n,10:20,96:104)); % cost
-        fitness(n) = sumOfSqrDif_(u(n,:,:), Vmarket(:,:), S, K); % cost funtion for n-th member of population
+        fitness(n) = sumOfSqrDif_(u(n,:,:), Vmarket(:,:), S, ptsToEvalK); % cost funtion for n-th member of population
 
         sig(n,:,:) = sigmaaa; 
         ctr(n,:,:) = ctrlpts;
@@ -61,7 +63,7 @@ for k = 1:Nmc
 
     %% Genetic part
         [minfitness, index_best] = min(fitness);
-        if (minfitness>4)
+        if (minfitness>0.1)
             T_ = T0*(1-k*(mod(k,M)==0)/Nmc)^4;
 
             % Selection
@@ -124,9 +126,9 @@ xlabel('K'); ylabel('T'); zlabel('sigma(K,T)');
 
 %% Draw diff of market and obtained prices
 figure;
-surf(K,T,(squeeze(u(index_best,:,1:25)) - squeeze(Vmarket(:,1:25))));
+surf(pts(5:17),T,(squeeze(u(index_best,:,5:17)) - Vmarket(:,5:17))./Vmarket(:,5:17));
 hold on;
-xlabel('K'); ylabel('T'); zlabel('u(K,T) - Vmarket(K,T)');
+xlabel('K'); ylabel('T'); zlabel('(u(K,T) - Vmarket(K,T))/Vmarket');
 
 
 figure;

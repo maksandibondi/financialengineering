@@ -1,20 +1,20 @@
-function[u] = Pricer_dupire(sigma,K,T, discretization_num_K, discretization_num_T, S, r, discretizationType)
+function[u] = Pricer_dupire(sigma,ptsToEvalK,T, discretization_num_K, discretization_num_T, S, r, discretizationType)
 
 %% Discretization setting
-delta_k = (K(end)-K(1))/discretization_num_K;
+delta_k = (ptsToEvalK(end)-ptsToEvalK(1))/discretization_num_K;
 delta_t = (T(end)-T(1))/discretization_num_T;
 
 %% Setting initial and final conditions
 for j = 2:discretization_num_K %+1
-    u(1,j) = max(S - (K(j)), 0);
+    u(1,j) = max(S - (ptsToEvalK(j)), 0);
 end;
 
 for i = 1:discretization_num_T %+1
-    u(i,1) = S-K(1);
+    u(i,1) = S-ptsToEvalK(1);
 end;
 
 %% Filling the matrix of parameters alpha, beta, gamma
-[alpha, beta, gamma] = FillAlphaBetaGamma(sigma,r,K,discretization_num_K,S, discretizationType); 
+[alpha, beta, gamma] = FillAlphaBetaGamma(sigma,r,ptsToEvalK,discretization_num_K,S, discretizationType); 
 
 %% Pricing
 for n = 1:discretization_num_T-1
