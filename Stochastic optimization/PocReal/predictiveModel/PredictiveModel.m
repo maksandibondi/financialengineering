@@ -16,8 +16,9 @@ addpath('../parser','-end');
 addpath('../pricing','-end');
 addpath('../interpolation', '-end');
 addpath('../utils', '-end');
-
+addpath('../formatting', '-end');
 
 clear;
 [K, T, S, Vmarket, VolImp] = parseCBOE('../../resources/UnderlyingOptionsEODCalcs_2018-11.csv', '^VIX', '2018-11-15', 'C');
-geneticRunner(K, T, S, 0, Vmarket, VolImp, 'nonuniform');
+[T, Vmarket, VolImp] = additionalFormatting( T,  Vmarket, VolImp, S, K, 'C');
+geneticRunner(K, T, S, 0, Vmarket, VolImp, 'uniform');

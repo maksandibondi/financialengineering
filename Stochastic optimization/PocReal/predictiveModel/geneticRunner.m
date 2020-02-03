@@ -4,10 +4,10 @@ function [] = geneticRunner(K, T, S, r, Vmarket, VolImp, discretizationType)
 K_0 = K(1,1); K_l = K(end,1);
 T_0 = T(1,1); T_l = T(end,1);
 discretization_num_K = size(K,1);
-discretization_num_T = size(T,1);
+discretization_num_T = size(T,1); 
 
 T0 = 1000;
-t = 0.1;
+t = 0.05;
 Nmc = 2^14;
 M = 64;
 popsize = 20;
@@ -63,7 +63,7 @@ for k = 1:Nmc
 
     %% Genetic part
         [minfitness, index_best] = min(fitness);
-        if (minfitness>0.3)
+        if (minfitness>0.1)
             T_ = T0*(1-k*(mod(k,M)==0)/Nmc)^4;
 
             % Selection
@@ -123,14 +123,47 @@ hold on;
 surf(ptsToEvalK,T,zeros(discretization_num_T,discretization_num_K), 'FaceColor', [1 0 1]);
 xlabel('K'); ylabel('T'); zlabel('sigma(K,T)');
 
+%% Draw diff of local vol obtained with implied vol plot
+if (strcmp(discretizationType,'nonuniform'))
+    figure;
+    hold on;
+    plot(T, sig(index_best,:,30), 'r');
+    plot(T, sig(index_best,:,31), 'b');
+    xlabel('T'); ylabel('sigma'); 
+    figure;
+    hold on;
+    plot(T, Vmarket(:,31), 'r');
+    plot(T, u(index_best,:,31), 'b');
+    xlabel('T'); ylabel('u'); 
+else
+    figure;
+    hold on;
+    plot(T, sig(index_best,:,10), 'r');
+    plot(T, sig(index_best,:,11), 'b');
+    xlabel('T'); ylabel('sigma');  
+    figure;
+    hold on;
+    plot(T, Vmarket(:,6), 'y');
+    plot(T, u(index_best,:,6), 'g');
+    plot(T, Vmarket(:,11), 'r');
+    plot(T, u(index_best,:,11), 'b');
+    xlabel('T'); ylabel('u'); 
+end;
 
 %% Draw diff of market and obtained prices
-figure;
-surf(ptsToEvalK(29:33),T,(squeeze(u(index_best,:,29:33)) - Vmarket(:,29:33))./Vmarket(:,29:33));
-hold on;
-xlabel('K'); ylabel('T'); zlabel('(u(K,T) - Vmarket(K,T))/Vmarket');
-
+if (strcmp(discretizationType,'nonuniform'))
+    figure;
+    surf(ptsToEvalK(29:33),T,(squeeze(u(index_best,:,29:33)) - Vmarket(:,29:33))./Vmarket(:,29:33));
+    hold on;
+    xlabel('K'); ylabel('T'); zlabel('(u(K,T) - Vmarket(K,T))/Vmarket');
+else
+    figure;
+    surf(ptsToEvalK(7:14),T,(squeeze(u(index_best,:,7:14)) - Vmarket(:,7:14))./Vmarket(:,7:14));
+    hold on;
+    xlabel('K'); ylabel('T'); zlabel('(u(K,T) - Vmarket(K,T))/Vmarket');
+end;
 
 figure;
 surf(ptsToEvalK,T,squeeze(u(index_best,:,:)));
 hold on;
+
