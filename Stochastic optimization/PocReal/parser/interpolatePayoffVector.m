@@ -37,7 +37,7 @@ function [ Vmarket_filled ] = interpolatePayoffVector( Vmarket, K, S, optionType
         elseif (optionType == 'P' && K(end) < S)
              bestGuess = 0.01;
         elseif (optionType == 'P' && K(end) > S)
-             bestGuess = K(emd) - S;
+             bestGuess = K(end) - S;
         end
         vectorWithNans(end) = bestGuess;
         Vmarket(end) = bestGuess;

@@ -1,4 +1,4 @@
-function [sigma] = SplineLinear2DInterp(T_0,T_l,K_0,K_l, S, disc_T,disc_K,ptsToEvalK,ptsToEvalT, ctrlpts, discretizationType)
+function [sigma] = SplineLinear2DInterp(T_0,T_l,K_0,K_l, S, disc_T,disc_K,ptsToEvalK,ptsToEvalT, ctrlpts, discretizationType, interpTypeK)
 
 %% Prepare grids
 delta_t = (T_l-T_0)/(disc_T-1);
@@ -15,31 +15,27 @@ end
 
 knotsT = T_0:delta_t:T_l;
 
-%% 2D interpolation
-% [Xq,Yq] = meshgrid(ptsToEvalK,ptsToEvalT);
-% sigma(:,:) = interp2(knotsK, knotsT, ctrlpts, Xq,Yq,  'spline');
-% 
-% figure;
-% plot(ptsToEvalK(1:40), sigma(1,1:40));
-% hold on;
-% plot(knotsK(1:10), ctrlpts(1,1:10), 'red');
-% return;
-
 %% Space discretization
 if (strcmp(discretizationType, 'uniform'))
+    %sigma_temp(1,:) = zeros(1,size(ptsToEvalK, 2));
     for i = 1:disc_T 
-        order = 4;
-        sigma_temp(i,:) = Bspline(knotsK,ctrlpts(i,:), order, ptsToEvalK);
-        %sigma_temp(i,:) = interp1(knotsK, ctrlpts(i,:), ptsToEvalK, 'linear');
-        %sigma_temp(i,:) = interp1(knotsK, ctrlpts(i,:), ptsToEvalK,'pchip'); % works for uniform knots
+        if (strcmp(interpTypeK, 'bspline'))
+            order = 4;
+            sigma_temp(i,:) = Bspline(knotsK,ctrlpts(i,:), order, ptsToEvalK);
+        else
+            sigma_temp(i,:) = interp1(knotsK, ctrlpts(i,:), ptsToEvalK, interpTypeK);
+        end;
     end;
 else
      for i = 1:disc_T
-        %sigma_temp(i,:) = interp1(knots,ctrlpts(i,:), ptsToEvalK, 'spline'); % works for nonuniform knots
+         if (strcmp(interpTypeK, 'bspline'))
+            order = 4;
+            sigma_temp(i,:) = Bspline(knotsK,ctrlpts(i,:), order, ptsToEvalK);
+         else
+            sigma_temp(i,:) = interp1(knots,ctrlpts(i,:), ptsToEvalK, interpTypeK);
+            %sigma_temp(i,:) = interp1(knots,ctrlpts(i,:), ptsToEvalK, 'spline'); % works for nonuniform knots
+         end;
         %sigma_temp(i,:) = interp1(knotsK, ctrlpts(i,:), ptsToEvalK, 'linear', 'extrap');
-        order = 4;
-        sigma_temp(i,:) = Bspline(knotsK,ctrlpts(i,:), order, ptsToEvalK);
-        
     end;
 end
 
