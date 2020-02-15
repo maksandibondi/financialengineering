@@ -21,11 +21,11 @@ end;
 % weight(5,27) = 2;
 % sumall = 14;
 
-weight(:,:) = 0;
-sumall = 10;
-for ii = 2:11
-    weight(ii, 27) = 1;
-end;
+% weight(:,:) = 0;
+% sumall = 10;
+% for ii = 2:11
+%     weight(ii, 27) = 1;
+% end;
 
 dif = 0;
 for i = 2:sz1
