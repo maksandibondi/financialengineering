@@ -1,4 +1,4 @@
-function [alpha, beta, gamma] = FillAlphaBetaGamma(sigma, r, K, discretization_num_K, S, discretizationType)
+function [alpha, beta, gamma] = FillAlphaBetaGamma(sigma, r, K, discretization_num_K, S, discretizationType, nonuniform_method)
 
 d1 = size(sigma,1); % discretization_num_T
 d2 = size(sigma,2); % discretization_num_K
@@ -28,8 +28,7 @@ d2 = size(sigma,2); % discretization_num_K
     
     else
         %% Nonuniform        
-        [~, y] = createNonUniformGridAroundSpot(K(end), K(1), discretization_num_K, S, 'log');
-        %[~, y] = createNonUniformGridAroundSpot(K(end), K(1), discretization_num_K, S, 'user');
+        [~, y] = createNonUniformGridAroundSpot(K(end), K(1), discretization_num_K, S, nonuniform_method);
      
         % matrix h_i
         h = zeros(d1,d2);

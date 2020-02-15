@@ -1,0 +1,9 @@
+function [] = getSeedFromImplicitVol(T_0,T_l,K_0,K_l,S,disc_T, disc_K,VolImp, knotsK, knotsT)
+
+for i = 1:disc_T 
+    order = 4;
+    ctrl_temp(i,:) = Bspline(knotsK,VolImp(i,:), order, ptsToEvalK);
+end;
+
+
+end;

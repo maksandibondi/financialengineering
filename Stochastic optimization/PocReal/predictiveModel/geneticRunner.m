@@ -17,6 +17,11 @@ epsilon = inputStructure.epsilon;
 concentration_weights = inputStructure.concentration_weights;
 discretizationType = inputStructure.discretizationType;
 interpTypeK = inputStructure.interpTypeK;
+nonuniform_method = inputStructure.nonuniform_method;
+includeVolAssumption1 = inputStructure.includeVolAssumption1;
+includeVolAssumption2 = inputStructure.includeVolAssumption2;
+includeVolAssumptionImplicit = inputStructure.includeVolAssumptionImplicit;
+%rowByRowMutation = inputStructure.rowByRowMutation;
 
 rootdir = fullfile(pwd, '..');
 outputFile = strcat(rootdir, '/Results/', inputStructure.date, '_', discretizationType, '_', interpTypeK, '_', 'concentration_weights_', strrep(num2str(concentration_weights),'.',''), 'epsilon_', strrep(num2str(epsilon), '.', ''), '.xls');
@@ -28,8 +33,7 @@ if (strcmp(discretizationType, 'uniform'))
     ptsToEvalK = transp(K(:,1));
 else 
     %% Nonuniform discretization grid(the same as in the pricer)
-    [ptsToEvalK, ~] = createNonUniformGridAroundSpot(K_l, K_0, discretization_num_K, S, 'log');
-    %[ptsToEvalK, ~] = createNonUniformGridAroundSpot(K_l, K_0, discretization_num_K, S, 'user');
+    [ptsToEvalK, ~] = createNonUniformGridAroundSpot(K_l, K_0, discretization_num_K, S, nonuniform_method);
 end
 
 %% Getting non uniform market prices by interpolating uniform if needed
@@ -37,6 +41,7 @@ if (strcmp(discretizationType, 'nonuniform'))
     knotsK = transp(K(:,1));
     for i = 1:discretization_num_T
         Vmarket_temp(i,:) = interp1(knotsK, Vmarket(i,:), ptsToEvalK, 'linear' ,'extrap');
+        %Vmarket_temp(i,:) = interp1(knotsK, Vmarket(i,:), ptsToEvalK, 'spline');
     end;
     Vmarket = Vmarket_temp;
 end
@@ -51,37 +56,71 @@ for k = 1:Nmc
         if (k == 1)
             %ctrlpts = squeeze(VolImp(1:disc_T, 1:disc_K)); %% if we want a good seed as implied vol
             %% Seed is very significant but can be fought with mutation coefficient high
+            rng('shuffle');
             ctrlpts = rand(disc_T,disc_K);
-            %Spline evaluated at the points at which our non-uniform discretization is
-            % done. How to give it the size 31*198 as well?
+            if includeVolAssumption1 %% Assumtion that local vol is bigger for bigger maturity
+                for i = 1 : disc_T
+                    ctrlpts(i,:) = ctrlpts(i,:)*(i/disc_T);
+                end;
+            end;
+            if includeVolAssumption2 %% Assumtion that local vol is bigger for lower maturity
+                for i = 1 : disc_T
+                    ctrlpts(i,:) = ctrlpts(i,:)*disc_T/i;
+                end;
+            end;
+            if includeVolAssumptionImplicit
+                ctrlpts = getSeedFromImplicitVol(K_0, K_l, T_0, T_l, discretization_num_T, discretization_num_K,disc_T, disc_K,VolImp, ptsToEvalK, T);
+            end;
+            
         else
             %% Ctrlpts are the last ctr fenerated in mutation phase
             ctrlpts(:,:) = ctr(n,:,:);   
         end;
         
-        % We have to get interpolated sigma by 6*21 in 10*61 points to eval
+        % We have to get interpolated sigma by interpolating points to eval
+        % from disc_T*disc_K knots
         sigmaaa = SplineLinear2DInterp(T_0,T_l,K_0,K_l,S,disc_T, disc_K, ptsToEvalK, T, ctrlpts, discretizationType, interpTypeK);
-%         for (i = 1:5)
-%              plot(ptsToEvalK, sigmaaa(i,:));
-%              hold on;
+%%      Show vol splined
+%         if  n==1
+%                  plot(ptsToEvalK, sigmaaa(1,:));
+%                  %plot(ptsToEvalK, sigmaaa(5,:));
+%                  hold on;
 %         end;
         
         %% Pricing
-        u(n,:,:) = Pricer_dupire(sigmaaa, ptsToEvalK, T, discretization_num_K, discretization_num_T, S, r, discretizationType);
-
-        %fitness(n) = sumOfSqrDif(u(n,10:20,96:104),prices(n,10:20,96:104)); % cost
-        fitness(n) = sumOfSqrDif_(u(n,:,:), Vmarket(:,:), S, ptsToEvalK, epsilon, concentration_weights); % cost funtion for n-th member of population
+        u(n,:,:) = Pricer_dupire(sigmaaa, ptsToEvalK, T, discretization_num_K, discretization_num_T, S, r, discretizationType, nonuniform_method);
+        [fitness(n), difT, ~] = sumOfSqrDif_(u(n,:,:), Vmarket(:,:), S, ptsToEvalK, epsilon, concentration_weights); % cost funtion for n-th member of population
 
         sig(n,:,:) = sigmaaa; 
         ctr(n,:,:) = ctrlpts;
+        
+%%         if rowByRowMutation
+%             [~, worstindexT(n)] = max(difT);
+%         end;
     end;
 
-    %% Genetic part
-        [minfitness, index_best] = min(fitness);
-        if (minfitness>epsilon)
+    [minfitness, index_best] = min(fitness);
+    %% Show vol best
+%          if minfitness > 0.16
+%             plot(ptsToEvalK, squeeze(sig(index_best,1, :)), 'r');
+%             hold on;
+%          elseif minfitness < 0.155 && minfitness > 0.1355
+%             plot(ptsToEvalK, squeeze(sig(index_best,1, :)), 'b');
+%             hold on;
+%           elseif minfitness < 0.13 && minfitness > 0.11
+%             plot(ptsToEvalK, squeeze(sig(index_best,1, :)), 'k');
+%             hold on; 
+%            elseif minfitness < 0.11 
+%             plot(ptsToEvalK, squeeze(sig(index_best,1, :)), 'g');
+%             hold on; 
+%          end;
+         
+         %% Genetic part
+         if (minfitness>epsilon)
             T_ = T0*(1-k*(mod(k,M)==0)/Nmc)^4;
-
-            % Selection
+           
+         %% Selection
+            rng('shuffle');
             for n = 1:popsize  
                 if (rand() > exp(-fitness(n)/T_)) 
                      for l = 1:popsize
@@ -92,40 +131,57 @@ for k = 1:Nmc
                      ctr(n,:,:) = ctr(idx,:,:);
                 end;
             end;
-
-            % Mutation ( applied independently to all ctrl points (6*21))
+            
+         %% Mutation ( applied independently to all ctrl points (6*21))
             for n = 1:popsize
-            sz2 = size(ctr,2);
-            sz3 = size(ctr,3);
-            for m = 1:sz2
-                for g = 1:sz3
-                    init = ctr(n,m,g);
-                    ctr(n,m,g) = ctr(n,m,g) + t*(2*rand()-1);
-                    if (ctr(n,m,g)<0 || ctr(n,m,g)>1) % check the constraints
-                        ctr(n,m,g) = init;
+                sz2 = size(ctr,2);
+                sz3 = size(ctr,3);
+%%                 if rowByRowMutation
+%                     [~,m] = min(abs([1:size(ctr,2)] - worstindexT(n)));
+%                     for g = 1:sz3
+%                         init = ctr(n,m,g);
+%                         ctr(n,m,g) = ctr(n,m,g) + t*(2*rand()-1);
+%                         if (ctr(n,m,g)<0 || ctr(n,m,g)>1) % check the constraints
+%                            ctr(n,m,g) = init;
+%                         end;
+%                     end; 
+%%                 else 
+                    for m = 1:sz2
+                        for g = 1:sz3
+                            init = ctr(n,m,g);
+                            ctr(n,m,g) = ctr(n,m,g) + t*(2*rand()-1);
+                            if (ctr(n,m,g)<0 || ctr(n,m,g)>1) % check the constraints
+                               %ctr(n,m,g) = init;
+                            end;
+                        end;
                     end;
-                end;
-            end;
+%                 end;
             end;
 
-        else 
-            break;
-        end;
-
-        iter = iter+1;
-        fit = min(fitness)
+         else 
+             break;
+         end; 
+         
+         iter = iter+1;
+         display(minfitness);
 end;
 localVolCalibrated = squeeze(sig(index_best,:,:));
 
 
 %%  Visual part
 
+%% Write axes to file
+xlswrite(outputFile, ptsToEvalK, 1, 'B1');
+xlswrite (outputFile, T, 1, 'A2');
+xlswrite(outputFile, ptsToEvalK, 1, strcat('B', num2str(discretization_num_T+2,2)));
+xlswrite (outputFile, T, 1, strcat('A', num2str(discretization_num_T+3,2)));
+
 %% Write diff in prices into file
-[~, diffprice] = sumOfSqrDif_(u(index_best,:,:), Vmarket(:,:), S, ptsToEvalK, epsilon, concentration_weights);
-xlswrite(outputFile, diffprice);
+[~, ~, diffprice] = sumOfSqrDif_(u(index_best,:,:), Vmarket(:,:), S, ptsToEvalK, epsilon, concentration_weights);
+xlswrite(outputFile, diffprice, 1, 'B2');
 
 %% Write local volatility into file
-xlswrite(outputFile, localVolCalibrated, 1, strcat('A', num2str(discretization_num_T+2,2)));
+xlswrite(outputFile, localVolCalibrated, 1, strcat('B', num2str(discretization_num_T+3,2)));
 
 %% find mediane
 mediane = size(find(ptsToEvalK < S),2); %% Find index of last in(out) the money element
