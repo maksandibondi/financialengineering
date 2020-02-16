@@ -13,18 +13,17 @@ t = inputStructure.t;
 Nmc = inputStructure.Nmc;
 M = inputStructure.M;
 popsize = inputStructure.popsize;
-maxIter = inputStructure.maxIter;
 epsilon = inputStructure.epsilon;
 concentration_weights = inputStructure.concentration_weights;
 discretizationType = inputStructure.discretizationType;
 interpTypeK = inputStructure.interpTypeK;
 nonuniform_method = inputStructure.nonuniform_method;
-includeVolAssumption = inputStructure.includeVolAssumption;
+includeVolAssumptionImplicit = inputStructure.includeVolAssumptionImplicit;
 %rowByRowMutation = inputStructure.rowByRowMutation;
 
 rootdir = fullfile(pwd, '..');
-outputFile = strcat(rootdir, '/Results/', inputStructure.date, '_', discretizationType, '_', interpTypeK, '_', 'conc_weights_', strrep(num2str(concentration_weights),'.',''), 'epsilon_', strrep(num2str(epsilon), '.', ''), '_mut_',strrep(num2str(t),'.',''),  '.xls');
-outputFig = strcat(rootdir, '/Results/figures/', inputStructure.date, '_', discretizationType, '_', interpTypeK, '_', 'conc_weights_', strrep(num2str(concentration_weights),'.',''), 'epsilon_', strrep(num2str(epsilon), '.', ''), '_mut_',strrep(num2str(t),'.',''), '_placeholder', '.png');
+outputFile = strcat(rootdir, '/Results/', inputStructure.date, '_', discretizationType, '_', interpTypeK, '_', 'concentration_weights_', strrep(num2str(concentration_weights),'.',''), 'epsilon_', strrep(num2str(epsilon), '.', ''), '_mut_',strrep(num2str(t),'.',''),  '.xls');
+outputFig = strcat(rootdir, '/Results/figures/', inputStructure.date, '_', discretizationType, '_', interpTypeK, '_', 'concentration_weights_', strrep(num2str(concentration_weights),'.',''), 'epsilon_', strrep(num2str(epsilon), '.', ''), '_mut_',strrep(num2str(t),'.',''), '_placeholder', '.png');
 
 %% Creating uniform/non-uniform grid
 if (strcmp(discretizationType, 'uniform'))
@@ -146,7 +145,7 @@ for k = 1:Nmc
              break;
          end; 
          
-         if (iter > maxIter)
+         if (iter > 200)
              break;
          end;
          
