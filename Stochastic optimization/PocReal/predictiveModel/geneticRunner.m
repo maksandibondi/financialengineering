@@ -21,10 +21,16 @@ interpTypeK = inputStructure.interpTypeK;
 nonuniform_method = inputStructure.nonuniform_method;
 includeVolAssumption = inputStructure.includeVolAssumption;
 %rowByRowMutation = inputStructure.rowByRowMutation;
+vasicek_assumption = inputStructure.vasicek_assumption;
 
 rootdir = fullfile(pwd, '..');
 outputFile = strcat(rootdir, '/Results/', inputStructure.date, '_', discretizationType, '_', interpTypeK, '_', 'conc_weights_', strrep(num2str(concentration_weights),'.',''), 'epsilon_', strrep(num2str(epsilon), '.', ''), '_mut_',strrep(num2str(t),'.',''),  '.xls');
 outputFig = strcat(rootdir, '/Results/figures/', inputStructure.date, '_', discretizationType, '_', interpTypeK, '_', 'conc_weights_', strrep(num2str(concentration_weights),'.',''), 'epsilon_', strrep(num2str(epsilon), '.', ''), '_mut_',strrep(num2str(t),'.',''), '_placeholder', '.png');
+
+%% Setting up pseudo vasicek assumtion
+if (vasicek_assumption)
+    r = (20-S)/100;
+end;
 
 %% Creating uniform/non-uniform grid
 if (strcmp(discretizationType, 'uniform'))
@@ -45,10 +51,21 @@ if (strcmp(discretizationType, 'nonuniform'))
     Vmarket = Vmarket_temp;
 end
 
+%% Getting non uniform implied vol by interpolating uniform if needed
+if (strcmp(discretizationType, 'nonuniform'))
+    knotsK = transp(K(:,1));
+    for i = 1:discretization_num_T
+        VolImp_temp(i,:) = interp1(knotsK, VolImp(i,:), ptsToEvalK, 'linear' ,'extrap');
+        %Vmarket_temp(i,:) = interp1(knotsK, Vmarket(i,:), ptsToEvalK, 'spline');
+    end;
+    VolImp = VolImp_temp;
+end
 
+
+
+%% Algo
 iter = 0;
 isFound = 0;
-%% Algo
 for k = 1:Nmc
 
     for n = 1:popsize
@@ -157,24 +174,30 @@ end;
 localVolCalibrated = squeeze(sig(index_best,:,:));
 
 
-
+%%  Visual part
 if isFound
-
-    %%  Visual part
 
     %% Write axes to file
     xlswrite(outputFile, ptsToEvalK, 1, 'B1');
     xlswrite (outputFile, T, 1, 'A2');
-    xlswrite(outputFile, ptsToEvalK, 1, strcat('B', num2str(discretization_num_T+2,2)));
-    xlswrite (outputFile, T, 1, strcat('A', num2str(discretization_num_T+3,2)));
-
     %% Write diff in prices into file
     [~, ~, diffprice] = sumOfSqrDif_(u(index_best,:,:), Vmarket(:,:), S, ptsToEvalK, epsilon, concentration_weights);
     xlswrite(outputFile, diffprice, 1, 'B2');
-
+    
+    rownum = discretization_num_T+3;
+    xlswrite(outputFile, ptsToEvalK, 1, strcat('B', num2str(rownum,2)));
+    rownum = rownum+1;
+    xlswrite (outputFile, T, 1, strcat('A', num2str(rownum,2)));
     %% Write local volatility into file
-    xlswrite(outputFile, localVolCalibrated, 1, strcat('B', num2str(discretization_num_T+3,2)));
-
+    xlswrite(outputFile, localVolCalibrated, 1, strcat('B', num2str(rownum,2)));
+    
+    rownum = rownum + discretization_num_T+3;
+    xlswrite(outputFile, ptsToEvalK, 1, strcat('B', num2str(rownum,2)));
+    rownum = rownum + 1;
+    xlswrite (outputFile, T, 1, strcat('A', num2str(rownum,2)));
+    %% Write implied volatility into file
+    xlswrite(outputFile, VolImp, 1, strcat('B', num2str(rownum,2)));
+    
     %% find mediane
     mediane = size(find(ptsToEvalK < S),2); %% Find index of last in(out) the money element
 

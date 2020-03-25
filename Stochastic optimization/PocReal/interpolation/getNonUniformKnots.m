@@ -1,5 +1,5 @@
 function [ knots ] = getNonUniformKnots( X_0, X_last, concentrationPoint, numOfPoints )
-concentration_force = 0.7;
+concentration_force = 0.4;
 
 % gets interpolation knots concentrated around S
 knots(1) = X_0;
