@@ -22,15 +22,25 @@ nonuniform_method = inputStructure.nonuniform_method;
 includeVolAssumption = inputStructure.includeVolAssumption;
 %rowByRowMutation = inputStructure.rowByRowMutation;
 vasicek_assumption = inputStructure.vasicek_assumption;
+outputdir = inputStructure.outputdir;
 
-rootdir = fullfile(pwd, '..');
-outputFile = strcat(rootdir, '/Results/', inputStructure.date, '_', discretizationType, '_', interpTypeK, '_', 'conc_weights_', strrep(num2str(concentration_weights),'.',''), 'epsilon_', strrep(num2str(epsilon), '.', ''), '_mut_',strrep(num2str(t),'.',''),  '.xls');
-outputFig = strcat(rootdir, '/Results/figures/', inputStructure.date, '_', discretizationType, '_', interpTypeK, '_', 'conc_weights_', strrep(num2str(concentration_weights),'.',''), 'epsilon_', strrep(num2str(epsilon), '.', ''), '_mut_',strrep(num2str(t),'.',''), '_placeholder', '.png');
+outputFile = strcat(outputdir, '/', inputStructure.ticker, '_', strrep(inputStructure.date,'/','-'), '_', discretizationType, '_', interpTypeK, '_', 'concwgh_', strrep(num2str(concentration_weights),'.',''), 'eps_', strrep(num2str(epsilon), '.', ''), '_mut_',strrep(num2str(t),'.',''),  '.xls');
+outputFig = strcat(outputdir, '/figures/', inputStructure.ticker, '_', strrep(inputStructure.date,'/','-'), '_', discretizationType, '_', interpTypeK, '_', 'concwgh_', strrep(num2str(concentration_weights),'.',''), 'eps_', strrep(num2str(epsilon), '.', ''), '_mut_',strrep(num2str(t),'.',''), '_pholder', '.png');
+
+%% Set vol implied to zero if not passed as parameter
+if (VolImp == 0)
+    VolImp = zeros(size(Vmarket,1), size(Vmarket,2));
+end;
 
 %% Setting up pseudo vasicek assumtion
 if (vasicek_assumption)
     r = (20-S)/100;
 end;
+
+
+
+
+
 
 %% Creating uniform/non-uniform grid
 if (strcmp(discretizationType, 'uniform'))
@@ -207,8 +217,8 @@ if isFound
     hold on;
     title('3D plot of local volatility');
     xlabel('K'); ylabel('T'); zlabel('localVolCalibrated(K,T)');
-    saveas(gcf, strrep(outputFig,'placeholder','2'));
-    insertPictureToExcel( outputFile, strrep(outputFig,'placeholder','2'), 2 );
+    saveas(gcf, strrep(outputFig,'pholder','2'));
+    insertPictureToExcel( outputFile, strrep(outputFig,'pholder','2'), 2 );
 
     %% Draw sigma best near median
     rangeOfInterest = mediane-3:mediane+3;
@@ -218,8 +228,8 @@ if isFound
     hold on;
     title('3D plot of local volatility reduced to near the money');
     xlabel('K'); ylabel('T'); zlabel('localVolCalibrated(K,T)');
-    saveas(gcf, strrep(outputFig,'placeholder','3'));
-    insertPictureToExcel( outputFile, strrep(outputFig,'placeholder','3'), 3 );
+    saveas(gcf, strrep(outputFig,'pholder','3'));
+    insertPictureToExcel( outputFile, strrep(outputFig,'pholder','3'), 3 );
 
     %% BS surface
     figure;
@@ -227,8 +237,8 @@ if isFound
     hold on;
     title('3D plot of BS option prices obtained with local volatility');
     xlabel('K'); ylabel('T'); zlabel('u(K,T)');
-    saveas(gcf, strrep(outputFig,'placeholder','4'));
-    insertPictureToExcel( outputFile, strrep(outputFig,'placeholder','4'), 4 );
+    saveas(gcf, strrep(outputFig,'pholder','4'));
+    insertPictureToExcel( outputFile, strrep(outputFig,'pholder','4'), 4 );
 
     %% Draw diff of local vol obtained with implied vol
     Z = abs(localVolCalibrated - VolImp);
@@ -237,8 +247,8 @@ if isFound
     hold on;
     title('3D plot of diffbetween local Vol Calibrated and implied vol');
     xlabel('K'); ylabel('T'); zlabel('diff(K,T)');
-    saveas(gcf, strrep(outputFig,'placeholder','5'));
-    insertPictureToExcel( outputFile, strrep(outputFig,'placeholder','5'), 5 );
+    saveas(gcf, strrep(outputFig,'pholder','5'));
+    insertPictureToExcel( outputFile, strrep(outputFig,'pholder','5'), 5 );
 
     %% Draw diff of local vol obtained with implied vol plot 
     figure;
@@ -253,8 +263,8 @@ if isFound
     xlabel('T'); ylabel('localVolCalibrated');
     title('2D plot of sigma values for different K');
     legend (strcat('K=',num2str(ptsToEvalK(mediane)-3,2)),strcat('K=',num2str(ptsToEvalK(mediane)-2,2)),strcat('K=',num2str(ptsToEvalK(mediane)-1,2)), strcat('K=',num2str(ptsToEvalK(mediane),2)), strcat('K=',num2str(ptsToEvalK(mediane+1),2)), strcat('K=',num2str(ptsToEvalK(mediane+2),2)), strcat('K=',num2str(ptsToEvalK(mediane+3),2)));
-    saveas(gcf, strrep(outputFig,'placeholder','6'));
-    insertPictureToExcel( outputFile, strrep(outputFig,'placeholder','6'), 6 );
+    saveas(gcf, strrep(outputFig,'pholder','6'));
+    insertPictureToExcel( outputFile, strrep(outputFig,'pholder','6'), 6 );
 
     figure;
     hold on;
@@ -263,8 +273,8 @@ if isFound
     xlabel('T'); ylabel('u'); 
     title(strcat('2D plot comparing market price with obtained price at K=', num2str(ptsToEvalK(mediane))));
     legend (strcat('Vmarket at K=',num2str(ptsToEvalK(mediane),2)),strcat('u at K=',num2str(ptsToEvalK(mediane),2)));
-    saveas(gcf, strrep(outputFig,'placeholder','7'));
-    insertPictureToExcel( outputFile, strrep(outputFig,'placeholder','7'), 7 );
+    saveas(gcf, strrep(outputFig,'pholder','7'));
+    insertPictureToExcel( outputFile, strrep(outputFig,'pholder','7'), 7 );
 
     figure;
     rangeOfInterest = mediane-3:mediane+3;
@@ -272,8 +282,8 @@ if isFound
     hold on;
     xlabel('K'); ylabel('T'); zlabel('(u(K,T) - Vmarket(K,T))/Vmarket');
     title('3D plot showing absolute diff between market price with obtained price near the money');
-    saveas(gcf, strrep(outputFig,'placeholder','8'));
-    insertPictureToExcel( outputFile, strrep(outputFig,'placeholder','8'), 8);
+    saveas(gcf, strrep(outputFig,'pholder','8'));
+    insertPictureToExcel( outputFile, strrep(outputFig,'pholder','8'), 8);
 
     %% Draw convergence
     figure;
@@ -281,8 +291,8 @@ if isFound
     plot(1:iter, minfitnessList);
     title('2D plot of  convergence of genetic algorithm');
     xlabel('iter'); ylabel('fitness');
-    saveas(gcf, strrep(outputFig,'placeholder','9'));
-    insertPictureToExcel( outputFile, strrep(outputFig,'placeholder','9'), 9);
+    saveas(gcf, strrep(outputFig,'pholder','9'));
+    insertPictureToExcel( outputFile, strrep(outputFig,'pholder','9'), 9);
 else 
     %% Draw convergence
     figure;
@@ -290,9 +300,9 @@ else
     plot(1:iter, minfitnessList);
     title('2D plot of  convergence of genetic algorithm');
     xlabel('iter'); ylabel('fitness');
-    saveas(gcf, strrep(outputFig,'placeholder','1'));
+    saveas(gcf, strrep(outputFig,'pholder','1'));
     xlswrite(outputFile, 0, 1, 'B1');
-    insertPictureToExcel( outputFile, strrep(outputFig,'placeholder','1'), 1);
+    insertPictureToExcel( outputFile, strrep(outputFig,'pholder','1'), 1);
 end;
 
 

@@ -3,12 +3,13 @@ function [localVolCalibrated] = localVolCalibrator(inputStructure)
 % it builds linear regression on this data
 
 %% Improt folders
-addpath('../parser','-end');
-addpath('../pricing','-end');
-addpath('../interpolation', '-end');
-addpath('../utils', '-end');
-addpath('../formatting', '-end');
-addpath('../graphics', '-end');
+addpath('../../parser','-end');
+addpath('../../pricing','-end');
+addpath('../../interpolation', '-end');
+addpath('../../utils', '-end');
+addpath('../../formatting', '-end');
+addpath('../../graphics', '-end');
+addpath('..', '-end');
 
 %% parse market data and format it to prepare for usage here
 [K, T, S, Vmarket, VolImp] = parseCBOE(inputStructure.marketDataFile, inputStructure.ticker, inputStructure.date, inputStructure.optionType);
