@@ -1,4 +1,4 @@
-function [localVolCalibrated] = geneticRunner(K, T, S, r, Vmarket, VolImp, inputStructure)
+function [localVolCalibrated, diffprice, ptsToEvalK] = geneticRunner(K, T, S, r, Vmarket, VolImp, inputStructure)
 
 %% Initial parameters
 K_0 = K(1,1); K_l = K(end,1);
@@ -23,6 +23,7 @@ includeVolAssumption = inputStructure.includeVolAssumption;
 %rowByRowMutation = inputStructure.rowByRowMutation;
 vasicek_assumption = inputStructure.vasicek_assumption;
 outputdir = inputStructure.outputdir;
+visualizeResults = inputStructure.visualizeResults;
 
 outputFile = strcat(outputdir, '/', inputStructure.ticker, '_', strrep(inputStructure.date,'/','-'), '_', discretizationType, '_', interpTypeK, '_', 'concwgh_', strrep(num2str(concentration_weights),'.',''), 'eps_', strrep(num2str(epsilon), '.', ''), '_mut_',strrep(num2str(t),'.',''),  '.xls');
 outputFig = strcat(outputdir, '/figures/', inputStructure.ticker, '_', strrep(inputStructure.date,'/','-'), '_', discretizationType, '_', interpTypeK, '_', 'concwgh_', strrep(num2str(concentration_weights),'.',''), 'eps_', strrep(num2str(epsilon), '.', ''), '_mut_',strrep(num2str(t),'.',''), '_pholder', '.png');
@@ -36,9 +37,6 @@ end;
 if (vasicek_assumption)
     r = (20-S)/100;
 end;
-
-
-
 
 
 
@@ -182,127 +180,129 @@ for k = 1:Nmc
          display(minfitness);
 end;
 localVolCalibrated = squeeze(sig(index_best,:,:));
-
+[~, ~, diffprice] = sumOfSqrDif_(u(index_best,:,:), Vmarket(:,:), S, ptsToEvalK, epsilon, concentration_weights);
 
 %%  Visual part
-if isFound
+if visualizeResults
 
-    %% Write axes to file
-    xlswrite(outputFile, ptsToEvalK, 1, 'B1');
-    xlswrite (outputFile, T, 1, 'A2');
-    %% Write diff in prices into file
-    [~, ~, diffprice] = sumOfSqrDif_(u(index_best,:,:), Vmarket(:,:), S, ptsToEvalK, epsilon, concentration_weights);
-    xlswrite(outputFile, diffprice, 1, 'B2');
-    
-    rownum = discretization_num_T+3;
-    xlswrite(outputFile, ptsToEvalK, 1, strcat('B', num2str(rownum,2)));
-    rownum = rownum+1;
-    xlswrite (outputFile, T, 1, strcat('A', num2str(rownum,2)));
-    %% Write local volatility into file
-    xlswrite(outputFile, localVolCalibrated, 1, strcat('B', num2str(rownum,2)));
-    
-    rownum = rownum + discretization_num_T+3;
-    xlswrite(outputFile, ptsToEvalK, 1, strcat('B', num2str(rownum,2)));
-    rownum = rownum + 1;
-    xlswrite (outputFile, T, 1, strcat('A', num2str(rownum,2)));
-    %% Write implied volatility into file
-    xlswrite(outputFile, VolImp, 1, strcat('B', num2str(rownum,2)));
-    
-    %% find mediane
-    mediane = size(find(ptsToEvalK < S),2); %% Find index of last in(out) the money element
+    if isFound
 
-    %% Draw sigma best
-    figure;
-    surf(ptsToEvalK,T,localVolCalibrated);
-    hold on;
-    title('3D plot of local volatility');
-    xlabel('K'); ylabel('T'); zlabel('localVolCalibrated(K,T)');
-    saveas(gcf, strrep(outputFig,'pholder','2'));
-    insertPictureToExcel( outputFile, strrep(outputFig,'pholder','2'), 2 );
+        %% Write axes to file
+        xlswrite(outputFile, ptsToEvalK, 1, 'B1');
+        xlswrite (outputFile, T, 1, 'A2');
+        %% Write diff in prices into file
+        xlswrite(outputFile, diffprice, 1, 'B2');
 
-    %% Draw sigma best near median
-    rangeOfInterest = mediane-3:mediane+3;
-    Z = localVolCalibrated(:,rangeOfInterest);
-    figure;
-    surf(ptsToEvalK(rangeOfInterest),T,Z);
-    hold on;
-    title('3D plot of local volatility reduced to near the money');
-    xlabel('K'); ylabel('T'); zlabel('localVolCalibrated(K,T)');
-    saveas(gcf, strrep(outputFig,'pholder','3'));
-    insertPictureToExcel( outputFile, strrep(outputFig,'pholder','3'), 3 );
+        rownum = discretization_num_T+3;
+        xlswrite(outputFile, ptsToEvalK, 1, strcat('B', num2str(rownum,2)));
+        rownum = rownum+1;
+        xlswrite (outputFile, T, 1, strcat('A', num2str(rownum,2)));
+        %% Write local volatility into file
+        xlswrite(outputFile, localVolCalibrated, 1, strcat('B', num2str(rownum,2)));
 
-    %% BS surface
-    figure;
-    surf(ptsToEvalK,T,squeeze(u(index_best,:,:)));
-    hold on;
-    title('3D plot of BS option prices obtained with local volatility');
-    xlabel('K'); ylabel('T'); zlabel('u(K,T)');
-    saveas(gcf, strrep(outputFig,'pholder','4'));
-    insertPictureToExcel( outputFile, strrep(outputFig,'pholder','4'), 4 );
+        rownum = rownum + discretization_num_T+3;
+        xlswrite(outputFile, ptsToEvalK, 1, strcat('B', num2str(rownum,2)));
+        rownum = rownum + 1;
+        xlswrite (outputFile, T, 1, strcat('A', num2str(rownum,2)));
+        %% Write implied volatility into file
+        xlswrite(outputFile, VolImp, 1, strcat('B', num2str(rownum,2)));
 
-    %% Draw diff of local vol obtained with implied vol
-    Z = abs(localVolCalibrated - VolImp);
-    figure;
-    surf(ptsToEvalK,T,Z);
-    hold on;
-    title('3D plot of diffbetween local Vol Calibrated and implied vol');
-    xlabel('K'); ylabel('T'); zlabel('diff(K,T)');
-    saveas(gcf, strrep(outputFig,'pholder','5'));
-    insertPictureToExcel( outputFile, strrep(outputFig,'pholder','5'), 5 );
+        %% find mediane
+        mediane = size(find(ptsToEvalK < S),2); %% Find index of last in(out) the money element
 
-    %% Draw diff of local vol obtained with implied vol plot 
-    figure;
-    hold on;
-    plot(T, localVolCalibrated(:,mediane -3 ), 'c');
-    plot(T, localVolCalibrated(:,mediane -2 ), 'r');
-    plot(T, localVolCalibrated(:,mediane -1 ), 'y');
-    plot(T, localVolCalibrated(:,mediane), 'b');
-    plot(T, localVolCalibrated(:,mediane + 1), 'k');
-    plot(T, localVolCalibrated(:,mediane + 2), 'g');
-    plot(T, localVolCalibrated(:,mediane +3 ), 'm');
-    xlabel('T'); ylabel('localVolCalibrated');
-    title('2D plot of sigma values for different K');
-    legend (strcat('K=',num2str(ptsToEvalK(mediane)-3,2)),strcat('K=',num2str(ptsToEvalK(mediane)-2,2)),strcat('K=',num2str(ptsToEvalK(mediane)-1,2)), strcat('K=',num2str(ptsToEvalK(mediane),2)), strcat('K=',num2str(ptsToEvalK(mediane+1),2)), strcat('K=',num2str(ptsToEvalK(mediane+2),2)), strcat('K=',num2str(ptsToEvalK(mediane+3),2)));
-    saveas(gcf, strrep(outputFig,'pholder','6'));
-    insertPictureToExcel( outputFile, strrep(outputFig,'pholder','6'), 6 );
+        %% Draw sigma best
+        figure;
+        surf(ptsToEvalK,T,localVolCalibrated);
+        hold on;
+        title('3D plot of local volatility');
+        xlabel('K'); ylabel('T'); zlabel('localVolCalibrated(K,T)');
+        saveas(gcf, strrep(outputFig,'pholder','2'));
+        insertPictureToExcel( outputFile, strrep(outputFig,'pholder','2'), 2 );
 
-    figure;
-    hold on;
-    plot(T, Vmarket(:,mediane), 'r');
-    plot(T, u(index_best,:,mediane), 'b');
-    xlabel('T'); ylabel('u'); 
-    title(strcat('2D plot comparing market price with obtained price at K=', num2str(ptsToEvalK(mediane))));
-    legend (strcat('Vmarket at K=',num2str(ptsToEvalK(mediane),2)),strcat('u at K=',num2str(ptsToEvalK(mediane),2)));
-    saveas(gcf, strrep(outputFig,'pholder','7'));
-    insertPictureToExcel( outputFile, strrep(outputFig,'pholder','7'), 7 );
+        %% Draw sigma best near median
+        rangeOfInterest = mediane-3:mediane+3;
+        Z = localVolCalibrated(:,rangeOfInterest);
+        figure;
+        surf(ptsToEvalK(rangeOfInterest),T,Z);
+        hold on;
+        title('3D plot of local volatility reduced to near the money');
+        xlabel('K'); ylabel('T'); zlabel('localVolCalibrated(K,T)');
+        saveas(gcf, strrep(outputFig,'pholder','3'));
+        insertPictureToExcel( outputFile, strrep(outputFig,'pholder','3'), 3 );
 
-    figure;
-    rangeOfInterest = mediane-3:mediane+3;
-    surf(ptsToEvalK(rangeOfInterest), T, diffprice(:,rangeOfInterest));
-    hold on;
-    xlabel('K'); ylabel('T'); zlabel('(u(K,T) - Vmarket(K,T))/Vmarket');
-    title('3D plot showing absolute diff between market price with obtained price near the money');
-    saveas(gcf, strrep(outputFig,'pholder','8'));
-    insertPictureToExcel( outputFile, strrep(outputFig,'pholder','8'), 8);
+        %% BS surface
+        figure;
+        surf(ptsToEvalK,T,squeeze(u(index_best,:,:)));
+        hold on;
+        title('3D plot of BS option prices obtained with local volatility');
+        xlabel('K'); ylabel('T'); zlabel('u(K,T)');
+        saveas(gcf, strrep(outputFig,'pholder','4'));
+        insertPictureToExcel( outputFile, strrep(outputFig,'pholder','4'), 4 );
 
-    %% Draw convergence
-    figure;
-    hold on;
-    plot(1:iter, minfitnessList);
-    title('2D plot of  convergence of genetic algorithm');
-    xlabel('iter'); ylabel('fitness');
-    saveas(gcf, strrep(outputFig,'pholder','9'));
-    insertPictureToExcel( outputFile, strrep(outputFig,'pholder','9'), 9);
-else 
-    %% Draw convergence
-    figure;
-    hold on;
-    plot(1:iter, minfitnessList);
-    title('2D plot of  convergence of genetic algorithm');
-    xlabel('iter'); ylabel('fitness');
-    saveas(gcf, strrep(outputFig,'pholder','1'));
-    xlswrite(outputFile, 0, 1, 'B1');
-    insertPictureToExcel( outputFile, strrep(outputFig,'pholder','1'), 1);
+        %% Draw diff of local vol obtained with implied vol
+        Z = abs(localVolCalibrated - VolImp);
+        figure;
+        surf(ptsToEvalK,T,Z);
+        hold on;
+        title('3D plot of diffbetween local Vol Calibrated and implied vol');
+        xlabel('K'); ylabel('T'); zlabel('diff(K,T)');
+        saveas(gcf, strrep(outputFig,'pholder','5'));
+        insertPictureToExcel( outputFile, strrep(outputFig,'pholder','5'), 5 );
+
+        %% Draw diff of local vol obtained with implied vol plot 
+        figure;
+        hold on;
+        plot(T, localVolCalibrated(:,mediane -3 ), 'c');
+        plot(T, localVolCalibrated(:,mediane -2 ), 'r');
+        plot(T, localVolCalibrated(:,mediane -1 ), 'y');
+        plot(T, localVolCalibrated(:,mediane), 'b');
+        plot(T, localVolCalibrated(:,mediane + 1), 'k');
+        plot(T, localVolCalibrated(:,mediane + 2), 'g');
+        plot(T, localVolCalibrated(:,mediane +3 ), 'm');
+        xlabel('T'); ylabel('localVolCalibrated');
+        title('2D plot of sigma values for different K');
+        legend (strcat('K=',num2str(ptsToEvalK(mediane)-3,2)),strcat('K=',num2str(ptsToEvalK(mediane)-2,2)),strcat('K=',num2str(ptsToEvalK(mediane)-1,2)), strcat('K=',num2str(ptsToEvalK(mediane),2)), strcat('K=',num2str(ptsToEvalK(mediane+1),2)), strcat('K=',num2str(ptsToEvalK(mediane+2),2)), strcat('K=',num2str(ptsToEvalK(mediane+3),2)));
+        saveas(gcf, strrep(outputFig,'pholder','6'));
+        insertPictureToExcel( outputFile, strrep(outputFig,'pholder','6'), 6 );
+
+        figure;
+        hold on;
+        plot(T, Vmarket(:,mediane), 'r');
+        plot(T, u(index_best,:,mediane), 'b');
+        xlabel('T'); ylabel('u'); 
+        title(strcat('2D plot comparing market price with obtained price at K=', num2str(ptsToEvalK(mediane))));
+        legend (strcat('Vmarket at K=',num2str(ptsToEvalK(mediane),2)),strcat('u at K=',num2str(ptsToEvalK(mediane),2)));
+        saveas(gcf, strrep(outputFig,'pholder','7'));
+        insertPictureToExcel( outputFile, strrep(outputFig,'pholder','7'), 7 );
+
+        figure;
+        rangeOfInterest = mediane-3:mediane+3;
+        surf(ptsToEvalK(rangeOfInterest), T, diffprice(:,rangeOfInterest));
+        hold on;
+        xlabel('K'); ylabel('T'); zlabel('(u(K,T) - Vmarket(K,T))/Vmarket');
+        title('3D plot showing absolute diff between market price with obtained price near the money');
+        saveas(gcf, strrep(outputFig,'pholder','8'));
+        insertPictureToExcel( outputFile, strrep(outputFig,'pholder','8'), 8);
+
+        %% Draw convergence
+        figure;
+        hold on;
+        plot(1:iter, minfitnessList);
+        title('2D plot of  convergence of genetic algorithm');
+        xlabel('iter'); ylabel('fitness');
+        saveas(gcf, strrep(outputFig,'pholder','9'));
+        insertPictureToExcel( outputFile, strrep(outputFig,'pholder','9'), 9);
+    else 
+        %% Draw convergence
+        figure;
+        hold on;
+        plot(1:iter, minfitnessList);
+        title('2D plot of  convergence of genetic algorithm');
+        xlabel('iter'); ylabel('fitness');
+        saveas(gcf, strrep(outputFig,'pholder','1'));
+        xlswrite(outputFile, 0, 1, 'B1');
+        insertPictureToExcel( outputFile, strrep(outputFig,'pholder','1'), 1);
+    end;
+
 end;
-
 

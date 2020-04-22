@@ -25,6 +25,7 @@ inputStructure.nonuniform_method = 'user'; % 'log', 'sin'
 inputStructure.interpTypeK = 'bspline';
 %inputStructure.rowByRowMutation = 1;
 
+inputStructure.visualizeResults = 1;
 inputStructure.marketDataFile = '../../../resources/MSFT.csv';
 inputStructure.ticker = 'MSFT';
 inputStructure.date = '04/17/2020'; %
@@ -33,5 +34,6 @@ inputStructure.r = 0;
 inputStructure.includeVolAssumption = 'zero'; % zero
 inputStructure.vasicek_assumption = 0; % zero
 inputStructure.outputdir = fullfile(pwd,'../../Results/Results_MSFT');
+inputStructure.isNormalizedScale = 0;
 
 localVolCalibratorStock(inputStructure);

@@ -25,6 +25,7 @@ inputStructure.nonuniform_method = 'user'; % 'log', 'sin'
 inputStructure.interpTypeK = 'bspline';
 %inputStructure.rowByRowMutation = 1;
 
+inputStructure.visualizeResults = 1;
 inputStructure.marketDataFile = '../../../resources/UnderlyingOptionsEODCalcs_2019-01.csv';
 % '../../resources/UnderlyingOptionsEODCalcs_2018-11.csv'
 % '../../resources/UnderlyingOptionsEODCalcs_2018-12.csv'

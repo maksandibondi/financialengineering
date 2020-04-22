@@ -14,5 +14,5 @@ addpath('..', '-end');
 %% parse market data and format it to prepare for usage here
 [K, T, S, Vmarket, VolImp] = parseCBOE(inputStructure.marketDataFile, inputStructure.ticker, inputStructure.date, inputStructure.optionType);
 [T, Vmarket, VolImp] = additionalFormatting( T,  Vmarket, VolImp, S, K, inputStructure.optionType);
-localVolCalibrated = geneticRunner(K, T, S, inputStructure.r, Vmarket, VolImp, inputStructure);
+[localVolCalibrated, diffprice] = geneticRunner(K, T, S, inputStructure.r, Vmarket, VolImp, inputStructure);
 return;
