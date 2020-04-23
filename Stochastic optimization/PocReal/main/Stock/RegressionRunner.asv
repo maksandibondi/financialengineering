@@ -41,10 +41,6 @@ inputStructure.K_normalized = 100:5:230;
 calibrationDates = {'01/03/2020', '01/17/2020', '02/07/2020', '02/21/2020', '03/06/2020', '03/20/2020', '04/17/2020'};
 for i = 1:size(calibrationDates,2)
     inputStructure.date = cell2mat(calibrationDates(i)); 
-    [S, localVolCalibrated, localVolCalibratedNormalizedScale, diffprice] = localVolCalibratorStock(inputStructure);
-    S0(i) = S;
-    %LV(i,:,:) = localVolCalibrated;
-    LVN(i,:,:) = localVolCalibratedNormalizedScale;
+    [S, localVolCalibrated, localVolCalibratedNormalizedScale] = localVolCalibratorStock(inputStructure);
+    
 end;
-
-LV

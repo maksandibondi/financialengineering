@@ -66,8 +66,8 @@ for i = 1 : numOfT
         end;
     elseif (optionType == 'P')
         if abs(nonuniformK(1)-K(1,1))>0.0001
-            price = cat(1,0.0001,price);  % add initial value 0
-            nonuniformK = cat(1,K(1,1),nonuniformK); %add initial K = Kmin << S
+            price = cat(1,0.0001,price);  % add initial value S-K
+            nonuniformK = cat(1,K(1,1),nonuniformK);
         end;
         if abs(nonuniformK(end)-K(end,1))>0.0001
             price = cat(1,price,K(end,1)-S); % add final value K-S

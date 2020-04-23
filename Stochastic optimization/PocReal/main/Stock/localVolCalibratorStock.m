@@ -1,4 +1,4 @@
-function [S, localVolCalibrated, localVolCalibratedNormalizedScale] = localVolCalibratorStock(inputStructure)
+function [S, localVolCalibrated, localVolCalibratedNormalizedScale, diffprice] = localVolCalibratorStock(inputStructure)
 % This module takes data from files for different option historical data
 % it builds linear regression on this data
 
