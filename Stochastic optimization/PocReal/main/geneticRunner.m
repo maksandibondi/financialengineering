@@ -1,6 +1,7 @@
-function [localVolCalibrated, diffprice, ptsToEvalK] = geneticRunner(K, T, S, r, Vmarket, VolImp, inputStructure)
+function [localVolCalibrated, diffprice, ptsToEvalK, failure] = geneticRunner(K, T, S, r, Vmarket, VolImp, inputStructure)
 
 %% Initial parameters
+failure = 0;
 K_0 = K(1,1); K_l = K(end,1);
 T_0 = T(1,1); T_l = T(end,1);
 discretization_num_K = size(K,1);
@@ -170,12 +171,13 @@ for k = 1:Nmc
              isFound = 1;
              break;
          end; 
-         
-         if (iter > maxIter)
-             break;
-         end;
+        
          
          iter = iter+1;
+         if (iter > maxIter)
+             failure = 1;
+             break;
+         end;
          minfitnessList(iter) = minfitness;
          display(minfitness);
 end;

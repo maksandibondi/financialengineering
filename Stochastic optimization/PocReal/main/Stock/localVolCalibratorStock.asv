@@ -23,7 +23,7 @@ while (failure) %% rerun until success
     if (iter > 1 && iter < 7)
         inputStruct = adaptModelParameters(inputStruct, 'epsilon'); %% increase epsilon
     elseif (iter > 1)
-        inputStruct = adaptModelParameters(inputStruct, 'weight'); %% increase weight
+        inputStructadaptModelParameters(inputStruct, 'weight'); %% increase weight
     end;
     
     [localVolCalibrated, diffprice, ptsToEvalK, f] = geneticRunner(K, T, S, inputStruct.r, Vmarket, VolImp, inputStruct);
@@ -37,6 +37,6 @@ if inputStruct.isNormalizedScale
 end;
 
 epsilon = inputStruct.epsilon;
-weight = inputStruct.concentration_weights;
+weight = inputStruct.weight;
 
 return;
