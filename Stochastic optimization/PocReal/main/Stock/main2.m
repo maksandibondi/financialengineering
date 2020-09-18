@@ -1,5 +1,5 @@
 % In this file we make a run and study the relation between ATM local vol
-% and Implied volatility, Calibration Dates independent variables,
+% and Realized volatility independent variables in a univariate regression,
 % generating reports
 clear;
 % Intermediate res: calculated local vol( K,T ) for every T0 on input 
@@ -50,6 +50,7 @@ inputStructure.K_normalized = 100:5:230;
 
 calibrationDates = {'01/03/2020', '01/10/2020', '01/24/2020', '01/31/2020', '02/07/2020',  '02/28/2020', '03/06/2020',  '03/20/2020', '03/27/2020', '04/03/2020'};
 validationDates = {'01/17/2020','02/14/2020', '02/21/2020', '03/13/2020', '04/09/2020', '04/17/2020'};
+
 %% Prepare numeric calibration and validation dates
 calibrationDatesNumeric(1) = 0;
 for i = 2:size(calibrationDates,2) % get numeric values for calibration dates vector
@@ -61,7 +62,12 @@ for i = 1:size(validationDates,2) % get numeric values for calibration dates vec
 end;
 
 
-%% (1, 2) Calibrate Local Volatility with adaptive param for all Calibration dates
+%% (3) Calulate realized standard deviation at all maturities w.r.t all calibration dates
+% get date format of normalized maturities for each calibration date 
+T_normalized_dates = parseSpotCSVDateFromFractionOfYear('../../../resources/MSFT_spot.csv', calibrationDates, inputStructure.T_normalized);
+realizedVol = parseSpotCSVRealizedVol('../../../resources/MSFT_spot.csv', calibrationDates, T_normalized_dates);
+
+%% (3) Calibrate Local Volatility with adaptive param for all Calibration dates
 for i = 1:size(calibrationDates,2)
     inputStructure.date = cell2mat(calibrationDates(i)); 
     [S, localVolCalibrated, localVolCalibratedNormalizedScale, diffprice, epsilon, weight] = localVolCalibratorStockRunner(inputStructure);
@@ -71,7 +77,6 @@ for i = 1:size(calibrationDates,2)
     %LV(i,:,:) = localVolCalibrated;
     LVN(i,:,:) = localVolCalibratedNormalizedScale;
 end;
-
  % Construct ATM local vol matrix for regression analysis
 for k = 1:size(inputStructure.T_normalized, 2)
     for j = 1:size(calibrationDates,2)
@@ -80,7 +85,7 @@ for k = 1:size(inputStructure.T_normalized, 2)
     end;
 end;
 
-%% (2) Calibrate implied vol with adaptive param for all Calibration dates
+%% (3) Calibrate implied vol with adaptive param for all Calibration dates
  % Calculate implied volatility for all maturities for all calib dates 
 for i = 1:size(calibrationDates,2)
     inputStructure.date = cell2mat(calibrationDates(i)); 
@@ -96,7 +101,7 @@ for k = 1:size(inputStructure.T_normalized, 2)
     end;
 end;
 
-%% (1, 2) Visualize calibration results
+%% (3) Visualize calibration results
 for i = 1:size(calibrationDates,2)
     f1(i) = figure; f1(i).Visible = 'off'; f1(i).Tag = 'Local Vol Surface';
     surf(inputStructure.K_normalized, inputStructure.T_normalized, squeeze(LVN(i,:,:)));
@@ -108,115 +113,42 @@ for i = 1:size(calibrationDates,2)
     title(ttl);    
 end;
 
-%% (1, 2) Generate report
-report('0.rpt','-oReport0.rtf','-frtf');
+%% (3) Generate report
+report('0.rpt','-oReportCalibRealizedVol.rtf','-frtf');
 pause(7);
 
 
 
-%% (1) Regress ATM Local Volatility on calibration dates for each maturity 
+%% (3) Regress (univariate) ATM Local Volatility on realized T volatility of S for each maturity for all calib dates
 for k = 1:size(inputStructure.T_normalized, 2)
     LVATM_ = LVATM(k,:);
+    RelizedVol_ = realizedVol(:,k)';
     idxnan = isnan(LVATM_); %% find indices with non NAN values
-    [prmReg, rsquared] = polynomialFitting(calibrationDatesNumeric(~idxnan),LVATM_(~idxnan),1);
-    [prmReg2, rsquared2] = polynomialFitting(calibrationDatesNumeric(~idxnan),LVATM_(~idxnan),3);
-    paramReg(k,:) = prmReg;
-    paramReg2(k,:) = prmReg2; 
-    rsq(k) = rsquared;
-    rsq2(k) = rsquared2;
-    LVAMT_model = polyval(paramReg(k,:),calibrationDatesNumeric(~idxnan)); %% values obtained by model
-    LVAMT_model2 = polyval(paramReg2(k,:),calibrationDatesNumeric(~idxnan)); %% values obtained by model
-    %% visualize regression results
-    f(k) = figure; f(k).Visible = 'off'; f(k).Tag = 'ATMonTime reg';
-    s1 = scatter(calibrationDatesNumeric(~idxnan),LVATM_(~idxnan));
-    hold on
-    p1 = plot(calibrationDatesNumeric(~idxnan),LVAMT_model); xlabel('t'); ylabel('LVATM');
-    p2 = plot(calibrationDatesNumeric(~idxnan),LVAMT_model2); xlabel('t'); ylabel('LVATM');
-    ttl = sprintf('Linear regressions of ATM Local Vol on calibration date t for fixed T=%s',num2str(inputStructure.T_normalized(k)));
-    title(ttl);
-    legend([s1;p1;p2], 'LV ATM real', 'LV ATM lin regr order1', 'LV ATM lin regr order3');
-end;
-% Conclusion : sometimes negative coef of determination, bad fitting
-
-%% (1) Validate model on validation points (interm and extrap) with MAE (mean abs error)
- % calculate model values
-for k = 1:size(inputStructure.T_normalized, 2)
-    for i = 1:size(validationDates,2)
-        LVATM_model_vld(k,i) = polyval(paramReg(k,:), validationDatesNumeric(i));
-        LVATM_model_vld2(k,i) = polyval(paramReg2(k,:), validationDatesNumeric(i));
-    end;
-end;
-  % calculate real values : Calibrate local vol with adaptive param for all validation dates
-for i = 1:size(validationDates,2)
-    inputStructure.date = cell2mat(validationDates(i)); 
-    [S, localVolCalibrated, localVolCalibratedNormalizedScale, diffprice, epsilon, weight] = localVolCalibratorStockRunner(inputStructure);
-    S0_v(i) = S;
-    eps_v(i) = epsilon;
-    wei_v(i) = weight;
-    %LV(i,:,:) = localVolCalibrated;
-    LVN_vld(i,:,:) = localVolCalibratedNormalizedScale;
-end;
-
- % Construct ATM matrix 
-for k = 1:size(inputStructure.T_normalized, 2)
-    for j = 1:size(validationDates,2)
-        [~,closestIndex] = min(abs(S0_v(j)-inputStructure.K_normalized'));
-        LVATM_vld(k,j) = LVN_vld(j,k,closestIndex); %% get local vol value atm dynamics for all T
-    end;
-end;
-
- % Calculate MAE matrix
-   diff_vld = (abs(LVATM_vld-LVATM_model_vld))./LVATM_vld;
-   diff_vld2 = (abs(LVATM_vld-LVATM_model_vld2))./LVATM_vld;
-   MSE_vld = sum(sum(diff_vld(:,:)))/(size(diff_vld,1)*size(diff_vld,2));
-   MSE_vld2 = sum(sum(diff_vld2(:,:)))/(size(diff_vld2,1)*size(diff_vld2,2));
-   
-%% (1) Generate report
-   report('1.rpt','-oReport1.rtf','-frtf');
-   pause(7);
-   %close all; % close all figures
-
-   
-%% (2) Regress ATM Local Volatility on ATM implied volatility for each maturity for all calib dates
-for k = 1:size(inputStructure.T_normalized, 2)
-    LVATM_ = LVATM(k,:);
-    VolImpATM_ = VolImpATM(k,:);
-    idxnan = isnan(LVATM_); %% find indices with non NAN values
-    [prmReg, rsquared] = polynomialFitting(LVATM_(~idxnan),VolImpATM_(~idxnan),1);
-    [prmReg2, rsquared2] = polynomialFitting(LVATM_(~idxnan),VolImpATM_(~idxnan),3);
+    [prmReg, rsquared] = polynomialFitting(LVATM_(~idxnan),RelizedVol_(~idxnan),1);
+    [prmReg2, rsquared2] = polynomialFitting(LVATM_(~idxnan),RelizedVol_(~idxnan),3);
     paramReg(k,:) = prmReg;
     paramReg2(k,:) = prmReg2;
     rsq(k) = rsquared;
     rsq2(k) = rsquared2;
-    VolImpATM_model = polyval(paramReg(k,:),LVATM_(~idxnan)); %% values obtained by model
-    VolImpATM_model2 = polyval(paramReg2(k,:),LVATM_(~idxnan)); %% values obtained by model    
+    RelizedVol_model = polyval(paramReg(k,:),LVATM_(~idxnan)); %% values obtained by model
+    RelizedVol_model2 = polyval(paramReg2(k,:),LVATM_(~idxnan)); %% values obtained by model    
 
     %% visualize regression results
-    f(k) = figure; f(k).Visible = 'off'; f(k).Tag = 'ATMonImplied reg';
-    s1 = scatter(LVATM_(~idxnan),VolImpATM_(~idxnan));
+    f(k) = figure; f(k).Visible = 'off'; f(k).Tag = 'ATMonRealized reg';
+    s1 = scatter(LVATM_(~idxnan), RelizedVol_(~idxnan));
     hold on
-    p1 = plot(LVAMT_model,VolImpATM_(~idxnan)); ylabel('impvol ATM'); xlabel('LVATM');
-    p2 = plot(LVAMT_model2,VolImpATM_(~idxnan)); ylabel('impvol ATM'); xlabel('LVATM');
-    ttl = sprintf('Linear regressions of Implied vol(t) on ATM Local Vol(t) with fixed T=%s',num2str(inputStructure.T_normalized(k)));
+    p1 = plot(LVATM_(~idxnan),RelizedVol_model); ylabel('realized vol'); xlabel('LVATM');
+    p2 = plot(LVATM_(~idxnan),RelizedVol_model2); ylabel('realized vol'); xlabel('LVATM');
+    ttl = sprintf('Linear regressions of Relized Vol(t) on ATM Local Vol(t) with fixed T=%s',num2str(inputStructure.T_normalized(k)));
     title(ttl);
     legend([s1;p1;p2], 'LV ATM real', 'LV ATM lin regr order1', 'LV ATM lin regr order3');
 end;
-% Conclusion : sometimes negative coef of determination, bad fitting
 
-%% (2) Validate model on validation points (interm and extrap) with MAE (mean abs error)
-% calculate implied vol real values on validation points
-for i = 1:size(validationDates,2)
-    inputStructure.date = cell2mat(validationDates(i)); 
-    [impliedVolCalibrated, impliedVolCalibratedNormalizedScale, S] = impliedVolCalibratorStockRunner(inputStructure);
-    S0_v(i) = S;
-    VolImp_vld(i,:,:) = impliedVolCalibratedNormalizedScale;
-end;
-% Construct ATM matrix 
-for k = 1:size(inputStructure.T_normalized, 2)
-   for j = 1:size(validationDates,2)
-        [~,closestIndex] = min(abs(S0(j)-inputStructure.K_normalized'));
-        VolImpATM_vld(k,j) = VolImp_vld(j,k,closestIndex); %% get imp vol value atm dynamics for all T
-    end;
+%% (3) Validate model on validation points (interm and extrap) with MAE (mean abs error)
+% calculate realized vol values on validation points
+for i = 1:size(validationDates,2);
+    T_normalized_dates = parseSpotCSVDateFromFractionOfYear('../../../resources/MSFT_spot.csv', validationDates, inputStructure.T_normalized);
+    realizedVol_vld = parseSpotCSVRealizedVol('../../../resources/MSFT_spot.csv', validationDates, T_normalized_dates);
 end;
 
 % calculate local vol real values : Calibrate local vol with adaptive param for all validation dates
@@ -240,33 +172,20 @@ end;
 % calculate model values
 for k = 1:size(inputStructure.T_normalized, 2)
     for i = 1:size(validationDates,2)
-        VolImpATM_model_vld(k,i) = polyval(paramReg(k,:), LVATM_vld(k,i));
-        VolImpATM_model_vld2(k,i) = polyval(paramReg2(k,:), LVATM_vld(k,i));
+        RealizedVol_model_vld(k,i) = polyval(paramReg(k,:), LVATM_vld(k,i));
+        RealizedVol_model_vld2(k,i) = polyval(paramReg2(k,:), LVATM_vld(k,i));
     end;
 end;
 
 % Calculate MAE matrix
-diff_vld = (abs(VolImpATM_vld-VolImpATM_model_vld))./VolImpATM_vld;
-diff_vld2 = (abs(VolImpATM_vld-VolImpATM_model_vld2))./VolImpATM_vld;
+diff_vld = (abs(realizedVol_vld-RealizedVol_model_vld))./realizedVol_vld;
+diff_vld2 = (abs(realizedVol_vld-RealizedVol_model_vld2))./realizedVol_vld;
 MSE_vld = sum(sum(diff_vld(:,:)))/(size(diff_vld,1)*size(diff_vld,2));
 MSE_vld2 = sum(sum(diff_vld2(:,:)))/(size(diff_vld2,1)*size(diff_vld2,2));
 
-%% (2) Generate report
-   report('2.rpt','-oReport2.rtf','-frtf');
-   pause(7);
-   %close all; % close all figures
 
+%% (3) Generate report
+report('3.rpt','-oReportRealized.rtf','-frtf');
+pause(7);
 
-
-
-
-
-
-
-
-
-%% (4) Regress ATM Local Volatility on VIX value at t for each maturity for all calib dates
-
-
-%% (5) Regress ATM Local Volatility on VIX valye at T for each maturity for all calib dates
 
