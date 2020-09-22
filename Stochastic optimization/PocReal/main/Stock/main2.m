@@ -121,8 +121,9 @@ pause(7);
 
 %% (3) Regress (univariate) ATM Local Volatility on realized T volatility of S for each maturity for all calib dates
 for k = 1:size(inputStructure.T_normalized, 2)
-    LVATM_ = LVATM(k,:);
+    [LVATM_, sortedIndex] = sort(LVATM(k,:));
     RelizedVol_ = realizedVol(:,k)';
+    RealizedVol_ = RelizedVol_(sortedIndex);
     idxnan = isnan(LVATM_); %% find indices with non NAN values
     [prmReg, rsquared] = polynomialFitting(LVATM_(~idxnan),RelizedVol_(~idxnan),1);
     [prmReg2, rsquared2] = polynomialFitting(LVATM_(~idxnan),RelizedVol_(~idxnan),3);
@@ -188,4 +189,6 @@ MSE_vld2 = sum(sum(diff_vld2(:,:)))/(size(diff_vld2,1)*size(diff_vld2,2));
 report('3.rpt','-oReportRealized.rtf','-frtf');
 pause(7);
 
+%%  close all; % close all figures
+   delete(findall(0));
 

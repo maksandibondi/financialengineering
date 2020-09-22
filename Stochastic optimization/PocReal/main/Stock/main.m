@@ -179,8 +179,9 @@ end;
    
 %% (2) Regress ATM Local Volatility on ATM implied volatility for each maturity for all calib dates
 for k = 1:size(inputStructure.T_normalized, 2)
-    LVATM_ = LVATM(k,:);
+    [LVATM_, sortedIndex] = sort(LVATM(k,:));
     VolImpATM_ = VolImpATM(k,:);
+    VolImpATM_ = VolImpATM_(sortedIndex);
     idxnan = isnan(LVATM_); %% find indices with non NAN values
     [prmReg, rsquared] = polynomialFitting(LVATM_(~idxnan),VolImpATM_(~idxnan),1);
     [prmReg2, rsquared2] = polynomialFitting(LVATM_(~idxnan),VolImpATM_(~idxnan),3);
@@ -254,8 +255,12 @@ MSE_vld2 = sum(sum(diff_vld2(:,:)))/(size(diff_vld2,1)*size(diff_vld2,2));
 %% (2) Generate report
    report('2.rpt','-oReport2.rtf','-frtf');
    pause(7);
-   %close all; % close all figures
-
+   
+ 
+   
+   
+%% close all; % close all figures
+   delete(findall(0));
 
 
 
