@@ -36,9 +36,13 @@ for i = 2:sz1
         
         %% Good measure would be sum of abs differences 
         %dif = dif + (((prices(i,j)-u(1,i,j)))/prices(i,j))^2*weight(i,j)/sumall;
-        dp(i,j) = abs((prices(i,j)-u(1,i,j))/prices(i,j));
-        dif = dif + dp(i,j)*weight(i,j)/sumall;
-        difT(i) = difT(i) + dp(i,j)*weight(i,j)/sum(i);
+        dprice = abs((prices(i,j)-u(1,i,j))/prices(i,j));
+        if (isnan(dprice))
+            dprice=0;
+        end;
+        dp(i,j) = dprice;     
+        dif = dif + dprice*weight(i,j)/sumall;
+        difT(i) = difT(i) + dprice*weight(i,j)/sum(i);
     end;
 end;
 

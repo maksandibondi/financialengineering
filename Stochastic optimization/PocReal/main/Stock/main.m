@@ -200,7 +200,7 @@ for k = 1:size(inputStructure.T_normalized, 2)
     p2 = plot(LVAMT_model2,VolImpATM_(~idxnan)); ylabel('impvol ATM'); xlabel('LVATM');
     ttl = sprintf('Linear regressions of Implied vol(t) on ATM Local Vol(t) with fixed T=%s',num2str(inputStructure.T_normalized(k)));
     title(ttl);
-    legend([s1;p1;p2], 'LV ATM real', 'LV ATM lin regr order1', 'LV ATM lin regr order3');
+    legend([s1;p1;p2], 'Implied vol real', 'Implied vol lin regr order1', 'Implied vol lin regr order3');
 end;
 % Conclusion : sometimes negative coef of determination, bad fitting
 

@@ -53,7 +53,14 @@ for i = 1 : numOfT
     bid_price = table2array(workTable(rows, {'bid'}));
     %vols_implied = workTable(rows, {'implied_volatility_1545'});
     
-    price = (bid_price) + (ask_price - bid_price)/2;   
+    price = (bid_price) + (ask_price - bid_price)/2;  
+    %Clean zero values from price vector
+    for l = 2:size(price)-1
+        if (price(l) == 0 || isnan(price(l)))
+            price(l) = (price(l+1)-price(l-1))/2;
+        end;
+    end;
+    
     %% Provide K(0) and K(end) values to get the same scale whatever maturity we use and interpolate values in betweem
     if (optionType == 'C')
         if abs(nonuniformK(1)-K(1,1))>0.0001

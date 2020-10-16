@@ -142,7 +142,7 @@ for k = 1:size(inputStructure.T_normalized, 2)
     p2 = plot(LVATM_(~idxnan),RelizedVol_model2); ylabel('realized vol'); xlabel('LVATM');
     ttl = sprintf('Linear regressions of Relized Vol(t) on ATM Local Vol(t) with fixed T=%s',num2str(inputStructure.T_normalized(k)));
     title(ttl);
-    legend([s1;p1;p2], 'LV ATM real', 'LV ATM lin regr order1', 'LV ATM lin regr order3');
+    legend([s1;p1;p2], 'Realized vol real', 'Realized vol lin regr order1', 'Realized vol lin regr order3');
 end;
 
 %% (3) Validate model on validation points (interm and extrap) with MAE (mean abs error)
