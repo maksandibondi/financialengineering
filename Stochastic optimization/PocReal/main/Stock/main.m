@@ -109,7 +109,7 @@ for i = 1:size(calibrationDates,2)
 end;
 
 %% (1, 2) Generate report
-report('0.rpt','-oReport0.rtf','-frtf');
+report('0.rpt','-oReportCalibLVonDates.rtf','-frtf');
 pause(7);
 
 
@@ -157,6 +157,7 @@ for i = 1:size(validationDates,2)
     LVN_vld(i,:,:) = localVolCalibratedNormalizedScale;
 end;
 
+
  % Construct ATM matrix 
 for k = 1:size(inputStructure.T_normalized, 2)
     for j = 1:size(validationDates,2)
@@ -165,14 +166,28 @@ for k = 1:size(inputStructure.T_normalized, 2)
     end;
 end;
 
+
  % Calculate MAE matrix
    diff_vld = (abs(LVATM_vld-LVATM_model_vld))./LVATM_vld;
    diff_vld2 = (abs(LVATM_vld-LVATM_model_vld2))./LVATM_vld;
    MSE_vld = sum(sum(diff_vld(:,:)))/(size(diff_vld,1)*size(diff_vld,2));
    MSE_vld2 = sum(sum(diff_vld2(:,:)))/(size(diff_vld2,1)*size(diff_vld2,2));
+  
+   %% visualize validation results valDate/localVol
+for l = 1:size(inputStructure.T_normalized, 2)
+    fg(l) = figure; fg(l).Visible = 'off'; fg(l).Tag = 'ATMonTime reg';
+    s1_v = scatter(1:size(validationDates,2), LVATM_vld(l,:));
+    hold on
+    p1_v = plot(1:size(validationDates,2), LVATM_model_vld(l,:)); ylabel('local vol'); xlabel('validation Dates');
+    p2_v = plot(1:size(validationDates,2), LVATM_model_vld2(l,:)); ylabel('local vol'); xlabel('validation Dates');
+    ttl = sprintf('Validation: Lin regr of Local Vol(t) on Dates(t), fixed T=%s',num2str(inputStructure.T_normalized(k)));
+    title(ttl);
+    legend([s1_v;p1_v;p2_v], 'local vol real', 'local vol lin regr order1', 'local vol lin regr order3');
+    legend('boxoff');
+end;
    
 %% (1) Generate report
-   report('1.rpt','-oReport1.rtf','-frtf');
+   report('1.rpt','-oReportLVonDates.rtf','-frtf');
    pause(7);
    %close all; % close all figures
 
@@ -196,8 +211,8 @@ for k = 1:size(inputStructure.T_normalized, 2)
     f(k) = figure; f(k).Visible = 'off'; f(k).Tag = 'ATMonImplied reg';
     s1 = scatter(LVATM_(~idxnan),VolImpATM_(~idxnan));
     hold on
-    p1 = plot(LVAMT_model,VolImpATM_(~idxnan)); ylabel('impvol ATM'); xlabel('LVATM');
-    p2 = plot(LVAMT_model2,VolImpATM_(~idxnan)); ylabel('impvol ATM'); xlabel('LVATM');
+    p1 = plot(LVATM_(~idxnan),VolImpATM_model(~idxnan)); ylabel('impvol ATM'); xlabel('LVATM');
+    p2 = plot(LVATM_(~idxnan),VolImpATM_model2(~idxnan)); ylabel('impvol ATM'); xlabel('LVATM');
     ttl = sprintf('Linear regressions of Implied vol(t) on ATM Local Vol(t) with fixed T=%s',num2str(inputStructure.T_normalized(k)));
     title(ttl);
     legend([s1;p1;p2], 'Implied vol real', 'Implied vol lin regr order1', 'Implied vol lin regr order3');
@@ -252,8 +267,25 @@ diff_vld2 = (abs(VolImpATM_vld-VolImpATM_model_vld2))./VolImpATM_vld;
 MSE_vld = sum(sum(diff_vld(:,:)))/(size(diff_vld,1)*size(diff_vld,2));
 MSE_vld2 = sum(sum(diff_vld2(:,:)))/(size(diff_vld2,1)*size(diff_vld2,2));
 
+ %% visualize validation results localVol/impliedVol
+for l = 1:size(inputStructure.T_normalized, 2)
+    [LVATM_vld_, sortedIndex] = sort(LVATM_vld(k,:));
+    VolImp_vld_ = VolImp_vld(k,:);
+    VolImp_vld_ = VolImp_vld_(sortedIndex);
+    
+    fg(l) = figure; fg(l).Visible = 'off'; fg(l).Tag = 'ATMonImplied reg';
+    s1_v = scatter(LVATM_vld_,VolImp_vld_);
+    hold on
+    p1_v = plot(LVATM_vld_, VolImpATM_model_vld(l,:)); ylabel('implied vol'); xlabel('local vol');
+    p2_v = plot(LVATM_vld_, VolImpATM_model_vld2(l,:)); ylabel('implied vol'); xlabel('local vol');
+    ttl = sprintf('Validation: Lin regr of  Impied vol(t) on Local Vol(t), fixed T=%s',num2str(inputStructure.T_normalized(k)));
+    title(ttl);
+    legend([s1_v;p1_v;p2_v], 'local vol real', 'local vol lin regr order1', 'local vol lin regr order3');
+    legend('boxoff');
+end;
+
 %% (2) Generate report
-   report('2.rpt','-oReport2.rtf','-frtf');
+   report('2.rpt','-oReportImpVolonLV.rtf','-frtf');
    pause(7);
    
  

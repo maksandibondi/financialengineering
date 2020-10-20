@@ -126,9 +126,10 @@ RelizedVol_model = LVATM_*paramReg;
     s1 = scatter([1:size(calibrationDates,2)], RelizedVol_);
     hold on
     p1 = plot([1:size(calibrationDates,2)],RelizedVol_model); ylabel('realized vol'); xlabel('calibration dates');
-    ttl = sprintf('Multivariate linear regressions of Relized Vol(t) on ATM Local Vol(t) with fixed T=%s',num2str(inputStructure.T_normalized(end)));
+    ttl = sprintf('Multivariate linear regressions of Relized Vol(t) on ATM Local Vol(t)');
     title(ttl);
     legend([s1;p1], 'Realized vol real', 'Realized vol multivar lin regr order1');
+    legend('boxoff');
 
 %% (3) Validate model on validation points (interm and extrap) with MAE (mean abs error)
 % calculate realized vol values on validation points
@@ -161,6 +162,16 @@ RealizedVol_model_vld = LVATM_vld(:,:)'*paramReg;
 % Calculate MAE matrix
 diff_vld = (abs(realizedVol_vld(:,end)-RealizedVol_model_vld))./realizedVol_vld(:,end);
 MSE_vld = sum(sum(diff_vld(:,:)))/(size(diff_vld,1)*size(diff_vld,2));
+%% visualize validation results valDate/realVol
+    RealizedVol_model_vld_ = RealizedVol_model_vld';
+    fg(1) = figure; fg(1).Visible = 'off'; fg(1).Tag = 'ATMonRealized multivariate reg';
+    s1_v = scatter(1:size(validationDates,2), realizedVol_vld(1,:));
+    hold on
+    p1_v = plot(1:size(validationDates,2), RealizedVol_model_vld_(1,:)); ylabel('realized vol'); xlabel('validation Dates');
+    ttl = sprintf('Validation: Multivar regr of Relized Vol(t) on ATM Local Vol(t)');
+    title(ttl);
+    legend([s1_v;p1_v], 'Realized vol real', 'Realized vol multivar lin regr order1');
+    legend('boxoff');
 
 
 %% (3) Generate report

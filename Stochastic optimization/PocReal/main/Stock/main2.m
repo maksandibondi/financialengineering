@@ -134,7 +134,7 @@ for k = 1:size(inputStructure.T_normalized, 2)
     RelizedVol_model = polyval(paramReg(k,:),LVATM_(~idxnan)); %% values obtained by model
     RelizedVol_model2 = polyval(paramReg2(k,:),LVATM_(~idxnan)); %% values obtained by model    
 
-    %% visualize regression results
+%% visualize regression results
     f(k) = figure; f(k).Visible = 'off'; f(k).Tag = 'ATMonRealized reg';
     s1 = scatter(LVATM_(~idxnan), RelizedVol_(~idxnan));
     hold on
@@ -143,7 +143,10 @@ for k = 1:size(inputStructure.T_normalized, 2)
     ttl = sprintf('Linear regressions of Relized Vol(t) on ATM Local Vol(t) with fixed T=%s',num2str(inputStructure.T_normalized(k)));
     title(ttl);
     legend([s1;p1;p2], 'Realized vol real', 'Realized vol lin regr order1', 'Realized vol lin regr order3');
+    legend('boxoff');
 end;
+
+
 
 %% (3) Validate model on validation points (interm and extrap) with MAE (mean abs error)
 % calculate realized vol values on validation points
@@ -176,6 +179,38 @@ for k = 1:size(inputStructure.T_normalized, 2)
         RealizedVol_model_vld(k,i) = polyval(paramReg(k,:), LVATM_vld(k,i));
         RealizedVol_model_vld2(k,i) = polyval(paramReg2(k,:), LVATM_vld(k,i));
     end;
+end;
+%% visualize validation results localVol/realVol
+for k = 1:size(inputStructure.T_normalized, 2)
+    [LVATM_vld_, sortedIndex] = sort(LVATM_vld(k,:));
+    realizedVol_vld_ = realizedVol_vld(k,:);
+    realizedVol_vld_ = realizedVol_vld_(sortedIndex);
+    RealizedVol_model_vld_ = RealizedVol_model_vld(k,:);
+    RealizedVol_model_vld_ = RealizedVol_model_vld_(sortedIndex);
+    RealizedVol_model_vld2_ = RealizedVol_model_vld2(k,:);
+    RealizedVol_model_vld2_ = RealizedVol_model_vld2_(sortedIndex);  
+    
+    f(k) = figure; f(k).Visible = 'off'; f(k).Tag = 'ATMonRealized reg';
+    s1_v = scatter(LVATM_vld_, realizedVol_vld_);
+    hold on
+    p1_v = plot(LVATM_vld_, RealizedVol_model_vld_); ylabel('realized vol'); xlabel('LVATM');
+    p2_v = plot(LVATM_vld_, RealizedVol_model_vld2_); ylabel('realized vol'); xlabel('LVATM');
+    ttl = sprintf('Validation: Lin regr of Relized Vol(t) on ATM Local Vol(t), fixed T=%s',num2str(inputStructure.T_normalized(k)));
+    title(ttl);
+    legend([s1_v;p1_v;p2_v], 'Realized vol real', 'Realized vol lin regr order1', 'Realized vol lin regr order3');
+    legend('boxoff');
+end;
+%% visualize validation results valDate/realVol
+for l = 1:size(inputStructure.T_normalized, 2)
+    fg(l) = figure; fg(l).Visible = 'off'; fg(l).Tag = 'ATMonRealized reg';
+    s1_v = scatter(1:size(validationDates,2), realizedVol_vld(l,:));
+    hold on
+    p1_v = plot(1:size(validationDates,2), RealizedVol_model_vld(l,:)); ylabel('realized vol'); xlabel('validation Dates');
+    p2_v = plot(1:size(validationDates,2), RealizedVol_model_vld2(l,:)); ylabel('realized vol'); xlabel('validation Dates');
+    ttl = sprintf('Validation: Lin regr of Relized Vol(t) on ATM Local Vol(t), fixed T=%s',num2str(inputStructure.T_normalized(l)));
+    title(ttl);
+    legend([s1_v;p1_v;p2_v], 'Realized vol real', 'Realized vol lin regr order1', 'Realized vol lin regr order3');
+    legend('boxoff');
 end;
 
 % Calculate MAE matrix
