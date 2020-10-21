@@ -118,7 +118,7 @@ pause(7);
 %% (3) Regress (multivariate) ATM Local Volatility on realized T volatility of S for FIXED maturity for all calib dates
 RelizedVol_ = realizedVol(:,end); % last value of realized vol
 LVATM_ = LVATM(:,:)';
-paramReg = mvregress(LVATM_, RelizedVol_);
+[paramReg, sigma, E,CovB,logL] = mvregress(LVATM_, RelizedVol_); %E = 10*1, sigma = 0,027,
 
 RelizedVol_model = LVATM_*paramReg;
  %% visualize regression results
@@ -130,7 +130,39 @@ RelizedVol_model = LVATM_*paramReg;
     title(ttl);
     legend([s1;p1], 'Realized vol real', 'Realized vol multivar lin regr order1');
     legend('boxoff');
-
+ %% visualize regression stats
+ % plot residuals vs indep vars
+ for k = 1:size(inputStructure.T_normalized, 2)
+    res1(k) = figure; res1(k).Visible = 'off'; res1(k).Tag = 'ATMonRealized multivariate reg';
+    s2 = scatter(LVATM(k,:), E');
+    ylabel('residuals'); xlabel('local vol');
+    hold on
+    ttl = sprintf('Analysis: Multivar regr, residuals on local vol at T=%s',num2str(inputStructure.T_normalized(k)));
+    title(ttl);
+    legend(s2, 'Residuals');
+    legend('boxoff');
+ end;
+ 
+ % plot  residuals  vs fitted
+ res2 = figure; res2.Visible = 'off'; res2.Tag = 'ATMonRealized multivariate reg';
+ s3 = scatter(RelizedVol_model', E');
+ ylabel('residuals'); xlabel('fitted values');
+ hold on
+ ttl = sprintf('Analysis: Multivar regr, residuals on fitted values');
+ title(ttl);
+ legend(s3, 'Residuals');
+ legend('boxoff');
+ 
+ % plot histogram of residuals
+ res3 = figure; res3.Visible = 'off'; res3.Tag = 'ATMonRealized multivariate reg';
+ s4 = histogram(E');
+ ylabel('frequency'); xlabel('residuals');
+ hold on
+ ttl = sprintf('Analysis: Histogram of residuals');
+ title(ttl);
+ legend(s4, 'Residuals');
+ legend('boxoff');
+ 
 %% (3) Validate model on validation points (interm and extrap) with MAE (mean abs error)
 % calculate realized vol values on validation points
 for i = 1:size(validationDates,2);
@@ -173,11 +205,10 @@ MSE_vld = sum(sum(diff_vld(:,:)))/(size(diff_vld,1)*size(diff_vld,2));
     legend([s1_v;p1_v], 'Realized vol real', 'Realized vol multivar lin regr order1');
     legend('boxoff');
 
-
 %% (3) Generate report
 report('4.rpt','-oReportRealizedMultivar.rtf','-frtf');
 pause(7);
 
 %%  close all; % close all figures
-   delete(findall(0));
+delete(findall(0));
 

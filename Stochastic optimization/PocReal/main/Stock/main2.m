@@ -219,7 +219,6 @@ diff_vld2 = (abs(realizedVol_vld-RealizedVol_model_vld2))./realizedVol_vld;
 MSE_vld = sum(sum(diff_vld(:,:)))/(size(diff_vld,1)*size(diff_vld,2));
 MSE_vld2 = sum(sum(diff_vld2(:,:)))/(size(diff_vld2,1)*size(diff_vld2,2));
 
-
 %% (3) Generate report
 report('3.rpt','-oReportRealized.rtf','-frtf');
 pause(7);

@@ -118,44 +118,51 @@ pause(7);
 %% (3) Regress (multivariate) ATM Local Volatility on realized T volatility of S for FIXED maturity for all calib dates
 RelizedVol_ = realizedVol(:,end); % last value of realized vol
 LVATM_ = LVATM(:,:)';
-prmReg = mvregress(LVATM_, RelizedVol_);
+[paramReg, sigma, E,CovB,logL] = mvregress(LVATM_, RelizedVol_); %E = 10*1, sigma = 0,027,
 
-RelizedVol_model = LVATM_*prmReg;
+RelizedVol_model = LVATM_*paramReg;
  %% visualize regression results
     f(k) = figure; f(k).Visible = 'off'; f(k).Tag = 'ATMonRealized multivariate reg';
-    s1 = scatter(LVATM_(~idxnan), RelizedVol_);
+    s1 = scatter([1:size(calibrationDates,2)], RelizedVol_);
     hold on
-    p1 = plot(LVATM_(~idxnan),RelizedVol_model); ylabel('realized vol'); xlabel('LVATM');
-    p2 = plot(LVATM_(~idxnan),RelizedVol_model2); ylabel('realized vol'); xlabel('LVATM');
-    ttl = sprintf('Linear regressions of Relized Vol(t) on ATM Local Vol(t) with fixed T=%s',num2str(inputStructure.T_normalized(k)));
+    p1 = plot([1:size(calibrationDates,2)],RelizedVol_model); ylabel('realized vol'); xlabel('calibration dates');
+    ttl = sprintf('Multivariate linear regressions of Relized Vol(t) on ATM Local Vol(t)');
     title(ttl);
-    legend([s1;p1;p2], 'LV ATM real', 'LV ATM lin regr order1', 'LV ATM lin regr order3');
-
-for k = 1:size(inputStructure.T_normalized, 2)
-    [LVATM_, sortedIndex] = sort(LVATM(k,:));
-    RelizedVol_ = realizedVol(:,k)';
-    RealizedVol_ = RelizedVol_(sortedIndex);
-    idxnan = isnan(LVATM_); %% find indices with non NAN values
-    [prmReg, rsquared] = polynomialFitting(LVATM_(~idxnan),RelizedVol_(~idxnan),1);
-    [prmReg2, rsquared2] = polynomialFitting(LVATM_(~idxnan),RelizedVol_(~idxnan),3);
-    paramReg(k,:) = prmReg;
-    paramReg2(k,:) = prmReg2;
-    rsq(k) = rsquared;
-    rsq2(k) = rsquared2;
-    RelizedVol_model = polyval(paramReg(k,:),LVATM_(~idxnan)); %% values obtained by model
-    RelizedVol_model2 = polyval(paramReg2(k,:),LVATM_(~idxnan)); %% values obtained by model    
-
-    %% visualize regression results
-    f(k) = figure; f(k).Visible = 'off'; f(k).Tag = 'ATMonRealized reg';
-    s1 = scatter(LVATM_(~idxnan), RelizedVol_(~idxnan));
+    legend([s1;p1], 'Realized vol real', 'Realized vol multivar lin regr order1');
+    legend('boxoff');
+ %% visualize regression stats
+ % plot residuals vs indep vars
+ for k = 1:size(inputStructure.T_normalized, 2)
+    res1(k) = figure; res1(k).Visible = 'off'; res1(k).Tag = 'ATMonRealized multivariate reg';
+    s2 = scatter(LVATM(k,:), E');
+    ylabel('residuals'); xlabel('local vol');
     hold on
-    p1 = plot(LVATM_(~idxnan),RelizedVol_model); ylabel('realized vol'); xlabel('LVATM');
-    p2 = plot(LVATM_(~idxnan),RelizedVol_model2); ylabel('realized vol'); xlabel('LVATM');
-    ttl = sprintf('Linear regressions of Relized Vol(t) on ATM Local Vol(t) with fixed T=%s',num2str(inputStructure.T_normalized(k)));
+    ttl = sprintf('Analysis: Multivar regr, residuals on local vol at T=%s',num2str(inputStructure.T_normalized(k)));
     title(ttl);
-    legend([s1;p1;p2], 'LV ATM real', 'LV ATM lin regr order1', 'LV ATM lin regr order3');
-end;
-
+    legend(s2, 'Residuals');
+    legend('boxoff');
+ end;
+ 
+ % plot  residuals  vs fitted
+ res2 = figure; res2.Visible = 'off'; res2.Tag = 'ATMonRealized multivariate reg';
+ s3 = scatter(RelizedVol_model', E');
+ ylabel('residuals'); xlabel('fitted values');
+ hold on
+ ttl = sprintf('Analysis: Multivar regr, residuals on fitted values');
+ title(ttl);
+ legend(s3, 'Residuals');
+ legend('boxoff');
+ 
+ % plot histogram of residuals
+ res3 = figure; res3.Visible = 'off'; res3.Tag = 'ATMonRealized multivariate reg';
+ s4 = histogram(E');
+ ylabel('residuals');
+ hold on
+ ttl = sprintf('Analysis: Histogram of residuals);
+ title(ttl);
+ legend(s3, 'Residuals');
+ legend('boxoff');
+ 
 %% (3) Validate model on validation points (interm and extrap) with MAE (mean abs error)
 % calculate realized vol values on validation points
 for i = 1:size(validationDates,2);
@@ -182,22 +189,25 @@ for k = 1:size(inputStructure.T_normalized, 2)
 end;
 
 % calculate model values
-for k = 1:size(inputStructure.T_normalized, 2)
-    for i = 1:size(validationDates,2)
-        RealizedVol_model_vld(k,i) = polyval(paramReg(k,:), LVATM_vld(k,i));
-        RealizedVol_model_vld2(k,i) = polyval(paramReg2(k,:), LVATM_vld(k,i));
-    end;
-end;
+RealizedVol_model_vld = LVATM_vld(:,:)'*paramReg;
 
 % Calculate MAE matrix
-diff_vld = (abs(realizedVol_vld-RealizedVol_model_vld))./realizedVol_vld;
-diff_vld2 = (abs(realizedVol_vld-RealizedVol_model_vld2))./realizedVol_vld;
+diff_vld = (abs(realizedVol_vld(:,end)-RealizedVol_model_vld))./realizedVol_vld(:,end);
 MSE_vld = sum(sum(diff_vld(:,:)))/(size(diff_vld,1)*size(diff_vld,2));
-MSE_vld2 = sum(sum(diff_vld2(:,:)))/(size(diff_vld2,1)*size(diff_vld2,2));
+%% visualize validation results valDate/realVol
+    RealizedVol_model_vld_ = RealizedVol_model_vld';
+    fg(1) = figure; fg(1).Visible = 'off'; fg(1).Tag = 'ATMonRealized multivariate reg';
+    s1_v = scatter(1:size(validationDates,2), realizedVol_vld(1,:));
+    hold on
+    p1_v = plot(1:size(validationDates,2), RealizedVol_model_vld_(1,:)); ylabel('realized vol'); xlabel('validation Dates');
+    ttl = sprintf('Validation: Multivar regr of Relized Vol(t) on ATM Local Vol(t)');
+    title(ttl);
+    legend([s1_v;p1_v], 'Realized vol real', 'Realized vol multivar lin regr order1');
+    legend('boxoff');
 
 
 %% (3) Generate report
-report('3.rpt','-oReportRealizedMultivar.rtf','-frtf');
+report('4.rpt','-oReportRealizedMultivar.rtf','-frtf');
 pause(7);
 
 %%  close all; % close all figures
