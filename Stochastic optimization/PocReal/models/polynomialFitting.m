@@ -1,4 +1,4 @@
-function [ paramReg, rsquared ] = polynomialFitting( x, y, order )
+function [ paramReg, rsquared, resid ] = polynomialFitting( x, y, order )
 %POLYNOMIALFITTING Summary of this function goes here
 %   Detailed explanation goes here
 

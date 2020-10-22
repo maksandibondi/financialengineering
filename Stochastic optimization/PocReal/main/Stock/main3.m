@@ -122,7 +122,7 @@ LVATM_ = LVATM(:,:)';
 
 RelizedVol_model = LVATM_*paramReg;
  %% visualize regression results
-    f(k) = figure; f(k).Visible = 'off'; f(k).Tag = 'ATMonRealized multivariate reg';
+    f1(k) = figure; f1(k).Visible = 'off'; f1(k).Tag = 'ATMonRealized multivariate reg';
     s1 = scatter([1:size(calibrationDates,2)], RelizedVol_);
     hold on
     p1 = plot([1:size(calibrationDates,2)],RelizedVol_model); ylabel('realized vol'); xlabel('calibration dates');
@@ -133,7 +133,7 @@ RelizedVol_model = LVATM_*paramReg;
  %% visualize regression stats
  % plot residuals vs indep vars
  for k = 1:size(inputStructure.T_normalized, 2)
-    res1(k) = figure; res1(k).Visible = 'off'; res1(k).Tag = 'ATMonRealized multivariate reg';
+    f2(k) = figure; f2(k).Visible = 'off'; f2(k).Tag = 'ATMonRealized multivariate reg';
     s2 = scatter(LVATM(k,:), E');
     ylabel('residuals'); xlabel('local vol');
     hold on
@@ -144,7 +144,7 @@ RelizedVol_model = LVATM_*paramReg;
  end;
  
  % plot  residuals  vs fitted
- res2 = figure; res2.Visible = 'off'; res2.Tag = 'ATMonRealized multivariate reg';
+ f3 = figure; f3.Visible = 'off'; f3.Tag = 'ATMonRealized multivariate reg';
  s3 = scatter(RelizedVol_model', E');
  ylabel('residuals'); xlabel('fitted values');
  hold on
@@ -154,8 +154,8 @@ RelizedVol_model = LVATM_*paramReg;
  legend('boxoff');
  
  % plot histogram of residuals
- res3 = figure; res3.Visible = 'off'; res3.Tag = 'ATMonRealized multivariate reg';
- s4 = histogram(E');
+ f4 = figure; f4.Visible = 'off'; f4.Tag = 'ATMonRealized multivariate reg';
+ s4 = histogram(E',10);
  ylabel('frequency'); xlabel('residuals');
  hold on
  ttl = sprintf('Analysis: Histogram of residuals');
@@ -196,7 +196,7 @@ diff_vld = (abs(realizedVol_vld(:,end)-RealizedVol_model_vld))./realizedVol_vld(
 MSE_vld = sum(sum(diff_vld(:,:)))/(size(diff_vld,1)*size(diff_vld,2));
 %% visualize validation results valDate/realVol
     RealizedVol_model_vld_ = RealizedVol_model_vld';
-    fg(1) = figure; fg(1).Visible = 'off'; fg(1).Tag = 'ATMonRealized multivariate reg';
+    f5(1) = figure; f5(1).Visible = 'off'; f5(1).Tag = 'ATMonRealized multivariate reg';
     s1_v = scatter(1:size(validationDates,2), realizedVol_vld(1,:));
     hold on
     p1_v = plot(1:size(validationDates,2), RealizedVol_model_vld_(1,:)); ylabel('realized vol'); xlabel('validation Dates');

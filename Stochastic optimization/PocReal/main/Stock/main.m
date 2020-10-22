@@ -118,8 +118,8 @@ pause(7);
 for k = 1:size(inputStructure.T_normalized, 2)
     LVATM_ = LVATM(k,:);
     idxnan = isnan(LVATM_); %% find indices with non NAN values
-    [prmReg, rsquared] = polynomialFitting(calibrationDatesNumeric(~idxnan),LVATM_(~idxnan),1);
-    [prmReg2, rsquared2] = polynomialFitting(calibrationDatesNumeric(~idxnan),LVATM_(~idxnan),3);
+    [prmReg, rsquared, resid] = polynomialFitting(calibrationDatesNumeric(~idxnan),LVATM_(~idxnan),1);
+    [prmReg2, rsquared2, resid2] = polynomialFitting(calibrationDatesNumeric(~idxnan),LVATM_(~idxnan),3);
     paramReg(k,:) = prmReg;
     paramReg2(k,:) = prmReg2; 
     rsq(k) = rsquared;
@@ -127,7 +127,7 @@ for k = 1:size(inputStructure.T_normalized, 2)
     LVAMT_model = polyval(paramReg(k,:),calibrationDatesNumeric(~idxnan)); %% values obtained by model
     LVAMT_model2 = polyval(paramReg2(k,:),calibrationDatesNumeric(~idxnan)); %% values obtained by model
     %% visualize regression results
-    f(k) = figure; f(k).Visible = 'off'; f(k).Tag = 'ATMonTime reg';
+    f1(k) = figure; f1(k).Visible = 'off'; f1(k).Tag = 'ATMonTime reg';
     s1 = scatter(calibrationDatesNumeric(~idxnan),LVATM_(~idxnan));
     hold on
     p1 = plot(calibrationDatesNumeric(~idxnan),LVAMT_model); xlabel('t'); ylabel('LVATM');
@@ -135,6 +135,43 @@ for k = 1:size(inputStructure.T_normalized, 2)
     ttl = sprintf('Linear regressions of ATM Local Vol on calibration date t for fixed T=%s',num2str(inputStructure.T_normalized(k)));
     title(ttl);
     legend([s1;p1;p2], 'LV ATM real', 'LV ATM lin regr order1', 'LV ATM lin regr order3');
+    %% visualize regression stats  
+ % plot residuals vs indep vars
+    f2(k) = figure; f2(k).Visible = 'off'; f2(k).Tag = 'ATMonTime reg';
+    s2 = scatter(calibrationDatesNumeric(~idxnan), resid);
+    ylabel('residuals'); xlabel('local vol');
+    hold on
+    ttl = sprintf('Analysis: Multivar regr, residuals on calib dates at T=%s',num2str(inputStructure.T_normalized(k)));
+    title(ttl);
+    legend(s2, 'Residuals');
+    legend('boxoff');
+ % plot residuals vs indep vars (3rd order reg)
+    f3(k) = figure; f3(k).Visible = 'off'; f3(k).Tag = 'ATMonTime reg';
+    s3 = scatter(calibrationDatesNumeric(~idxnan), resid2);
+    ylabel('residuals'); xlabel('local vol');
+    hold on
+    ttl = sprintf('Analysis: Multivar regr, 3rd ordeer residuals on calib dates at T=%s',num2str(inputStructure.T_normalized(k)));
+    title(ttl);
+    legend(s3, 'Residuals');
+    legend('boxoff');
+ % plot histogram of residuals
+    f4(k) = figure; f4(k).Visible = 'off'; f4(k).Tag = 'ATMonTime reg';
+    s4 = histogram(resid,10);
+    ylabel('frequency'); xlabel('residuals');
+    hold on
+    ttl = sprintf('Analysis: Histogram of residuals, T=%s',num2str(inputStructure.T_normalized(k)));
+    title(ttl);
+    legend(s4, 'Residuals');
+    legend('boxoff');
+  % plot histogram of residuals 3rd order
+    f5(k) = figure; f5(k).Visible = 'off'; f5(k).Tag = 'ATMonTime reg';
+    s5 = histogram(resid2,10);
+    ylabel('frequency'); xlabel('residuals');
+    hold on
+    ttl = sprintf('Analysis: Histogram of residuals 3rd order, T=%s',num2str(inputStructure.T_normalized(k)));
+    title(ttl);
+    legend(s5, 'Residuals');
+    legend('boxoff');
 end;
 % Conclusion : sometimes negative coef of determination, bad fitting
 
@@ -175,7 +212,7 @@ end;
   
    %% visualize validation results valDate/localVol
 for l = 1:size(inputStructure.T_normalized, 2)
-    fg(l) = figure; fg(l).Visible = 'off'; fg(l).Tag = 'ATMonTime reg';
+    f6(l) = figure; f6(l).Visible = 'off'; f6(l).Tag = 'ATMonTime reg';
     s1_v = scatter(1:size(validationDates,2), LVATM_vld(l,:));
     hold on
     p1_v = plot(1:size(validationDates,2), LVATM_model_vld(l,:)); ylabel('local vol'); xlabel('validation Dates');
@@ -198,8 +235,8 @@ for k = 1:size(inputStructure.T_normalized, 2)
     VolImpATM_ = VolImpATM(k,:);
     VolImpATM_ = VolImpATM_(sortedIndex);
     idxnan = isnan(LVATM_); %% find indices with non NAN values
-    [prmReg, rsquared] = polynomialFitting(LVATM_(~idxnan),VolImpATM_(~idxnan),1);
-    [prmReg2, rsquared2] = polynomialFitting(LVATM_(~idxnan),VolImpATM_(~idxnan),3);
+    [prmReg, rsquared, resid] = polynomialFitting(LVATM_(~idxnan),VolImpATM_(~idxnan),1);
+    [prmReg2, rsquared2, resid2] = polynomialFitting(LVATM_(~idxnan),VolImpATM_(~idxnan),3);
     paramReg(k,:) = prmReg;
     paramReg2(k,:) = prmReg2;
     rsq(k) = rsquared;
@@ -208,7 +245,7 @@ for k = 1:size(inputStructure.T_normalized, 2)
     VolImpATM_model2 = polyval(paramReg2(k,:),LVATM_(~idxnan)); %% values obtained by model    
 
     %% visualize regression results
-    f(k) = figure; f(k).Visible = 'off'; f(k).Tag = 'ATMonImplied reg';
+    f7(k) = figure; f7(k).Visible = 'off'; f7(k).Tag = 'ATMonImplied reg';
     s1 = scatter(LVATM_(~idxnan),VolImpATM_(~idxnan));
     hold on
     p1 = plot(LVATM_(~idxnan),VolImpATM_model(~idxnan)); ylabel('impvol ATM'); xlabel('LVATM');
@@ -216,6 +253,43 @@ for k = 1:size(inputStructure.T_normalized, 2)
     ttl = sprintf('Linear regressions of Implied vol(t) on ATM Local Vol(t) with fixed T=%s',num2str(inputStructure.T_normalized(k)));
     title(ttl);
     legend([s1;p1;p2], 'Implied vol real', 'Implied vol lin regr order1', 'Implied vol lin regr order3');
+     %% visualize regression stats  
+ % plot residuals vs indep vars
+    f8(k) = figure; f8(k).Visible = 'off'; f8(k).Tag = 'ATMonImplied reg';
+    s2 = scatter(LVATM_(~idxnan), resid);
+    ylabel('residuals'); xlabel('local vol');
+    hold on
+    ttl = sprintf('Analysis Imp: Multivar regr, residuals on implied vol at T=%s',num2str(inputStructure.T_normalized(k)));
+    title(ttl);
+    legend(s2, 'Residuals');
+    legend('boxoff');
+ % plot residuals vs indep vars (3rd order reg)
+    f9(k) = figure; f9(k).Visible = 'off'; f9(k).Tag = 'ATMonImplied reg';
+    s3 = scatter(LVATM_(~idxnan), resid2);
+    ylabel('residuals'); xlabel('local vol');
+    hold on
+    ttl = sprintf('Analysis Imp: Multivar regr, 3rd ordeer residuals on implied vol at T=%s',num2str(inputStructure.T_normalized(k)));
+    title(ttl);
+    legend(s3, 'Residuals');
+    legend('boxoff');
+ % plot histogram of residuals
+    f10(k) = figure; f10(k).Visible = 'off'; f10(k).Tag = 'ATMonImplied reg';
+    s4 = histogram(resid,10);
+    ylabel('frequency'); xlabel('residuals');
+    hold on
+    ttl = sprintf('Analysis Imp: Histogram of residuals, T=%s',num2str(inputStructure.T_normalized(k)));
+    title(ttl);
+    legend(s4, 'Residuals');
+    legend('boxoff');
+  % plot histogram of residuals 3rd order
+    f11(k) = figure; f11(k).Visible = 'off'; f11(k).Tag = 'ATMonImplied reg';
+    s5 = histogram(resid2,10);
+    ylabel('frequency'); xlabel('residuals');
+    hold on
+    ttl = sprintf('Analysis Imp: Histogram of residuals 3rd order, T=%s',num2str(inputStructure.T_normalized(k)));
+    title(ttl);
+    legend(s5, 'Residuals');
+    legend('boxoff');
 end;
 % Conclusion : sometimes negative coef of determination, bad fitting
 
@@ -273,7 +347,7 @@ for l = 1:size(inputStructure.T_normalized, 2)
     VolImp_vld_ = VolImp_vld(k,:);
     VolImp_vld_ = VolImp_vld_(sortedIndex);
     
-    fg(l) = figure; fg(l).Visible = 'off'; fg(l).Tag = 'ATMonImplied reg';
+    f12(l) = figure; f12(l).Visible = 'off'; f12(l).Tag = 'ATMonImplied reg';
     s1_v = scatter(LVATM_vld_,VolImp_vld_);
     hold on
     p1_v = plot(LVATM_vld_, VolImpATM_model_vld(l,:)); ylabel('implied vol'); xlabel('local vol');

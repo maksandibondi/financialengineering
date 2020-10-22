@@ -125,8 +125,8 @@ for k = 1:size(inputStructure.T_normalized, 2)
     RelizedVol_ = realizedVol(:,k)';
     RealizedVol_ = RelizedVol_(sortedIndex);
     idxnan = isnan(LVATM_); %% find indices with non NAN values
-    [prmReg, rsquared] = polynomialFitting(LVATM_(~idxnan),RelizedVol_(~idxnan),1);
-    [prmReg2, rsquared2] = polynomialFitting(LVATM_(~idxnan),RelizedVol_(~idxnan),3);
+    [prmReg, rsquared, resid] = polynomialFitting(LVATM_(~idxnan),RelizedVol_(~idxnan),1);
+    [prmReg2, rsquared2, resid2] = polynomialFitting(LVATM_(~idxnan),RelizedVol_(~idxnan),3);
     paramReg(k,:) = prmReg;
     paramReg2(k,:) = prmReg2;
     rsq(k) = rsquared;
@@ -135,7 +135,7 @@ for k = 1:size(inputStructure.T_normalized, 2)
     RelizedVol_model2 = polyval(paramReg2(k,:),LVATM_(~idxnan)); %% values obtained by model    
 
 %% visualize regression results
-    f(k) = figure; f(k).Visible = 'off'; f(k).Tag = 'ATMonRealized reg';
+    f1(k) = figure; f1(k).Visible = 'off'; f1(k).Tag = 'ATMonRealized reg';
     s1 = scatter(LVATM_(~idxnan), RelizedVol_(~idxnan));
     hold on
     p1 = plot(LVATM_(~idxnan),RelizedVol_model); ylabel('realized vol'); xlabel('LVATM');
@@ -144,9 +144,46 @@ for k = 1:size(inputStructure.T_normalized, 2)
     title(ttl);
     legend([s1;p1;p2], 'Realized vol real', 'Realized vol lin regr order1', 'Realized vol lin regr order3');
     legend('boxoff');
+ %% visualize regression stats  
+ % plot residuals vs indep vars
+    f2(k) = figure; f2(k).Visible = 'off'; f2(k).Tag = 'ATMonRealized reg';
+    s2 = scatter(LVATM(k,:), resid);
+    ylabel('residuals'); xlabel('local vol');
+    hold on
+    ttl = sprintf('Analysis: Multivar regr, residuals on local vol at T=%s',num2str(inputStructure.T_normalized(k)));
+    title(ttl);
+    legend(s2, 'Residuals');
+    legend('boxoff');
+ % plot residuals vs indep vars (3rd order regression)
+    f3(k) = figure; f3(k).Visible = 'off'; f3(k).Tag = 'ATMonRealized reg';
+    s3 = scatter(LVATM(k,:), resid2);
+    ylabel('residuals'); xlabel('local vol');
+    hold on
+    ttl = sprintf('Analysis: Multivar regr, residuals on local vol at T=%s',num2str(inputStructure.T_normalized(k)));
+    title(ttl);
+    legend(s3, 'Residuals');
+    legend('boxoff');
+ % plot histogram of residuals
+    f4(k) = figure; f4(k).Visible = 'off'; f4(k).Tag = 'ATMonRealized reg';
+    s4 = histogram(resid,10);
+    ylabel('frequency'); xlabel('residuals');
+    hold on
+    ttl = sprintf('Analysis: Histogram of residuals, T=%s',num2str(inputStructure.T_normalized(k)));
+    title(ttl);
+    legend(s4, 'Residuals');
+    legend('boxoff');
+  % plot histogram of residuals 3rd order reg
+    f5(k) = figure; f5(k).Visible = 'off'; f5(k).Tag = 'ATMonRealized reg';
+    s5 = histogram(resid2,10);
+    ylabel('frequency'); xlabel('residuals');
+    hold on
+    ttl = sprintf('Analysis: Histogram of residuals 3rd order reg, T=%s',num2str(inputStructure.T_normalized(k)));
+    title(ttl);
+    legend(s5, 'Residuals');
+    legend('boxoff');
+
 end;
-
-
+ 
 
 %% (3) Validate model on validation points (interm and extrap) with MAE (mean abs error)
 % calculate realized vol values on validation points
@@ -190,7 +227,7 @@ for k = 1:size(inputStructure.T_normalized, 2)
     RealizedVol_model_vld2_ = RealizedVol_model_vld2(k,:);
     RealizedVol_model_vld2_ = RealizedVol_model_vld2_(sortedIndex);  
     
-    f(k) = figure; f(k).Visible = 'off'; f(k).Tag = 'ATMonRealized reg';
+    f6(k) = figure; f6(k).Visible = 'off'; f6(k).Tag = 'ATMonRealized reg';
     s1_v = scatter(LVATM_vld_, realizedVol_vld_);
     hold on
     p1_v = plot(LVATM_vld_, RealizedVol_model_vld_); ylabel('realized vol'); xlabel('LVATM');
@@ -202,7 +239,7 @@ for k = 1:size(inputStructure.T_normalized, 2)
 end;
 %% visualize validation results valDate/realVol
 for l = 1:size(inputStructure.T_normalized, 2)
-    fg(l) = figure; fg(l).Visible = 'off'; fg(l).Tag = 'ATMonRealized reg';
+    f7(l) = figure; f7(l).Visible = 'off'; f7(l).Tag = 'ATMonRealized reg';
     s1_v = scatter(1:size(validationDates,2), realizedVol_vld(l,:));
     hold on
     p1_v = plot(1:size(validationDates,2), RealizedVol_model_vld(l,:)); ylabel('realized vol'); xlabel('validation Dates');

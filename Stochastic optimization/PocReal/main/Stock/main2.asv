@@ -125,8 +125,8 @@ for k = 1:size(inputStructure.T_normalized, 2)
     RelizedVol_ = realizedVol(:,k)';
     RealizedVol_ = RelizedVol_(sortedIndex);
     idxnan = isnan(LVATM_); %% find indices with non NAN values
-    [prmReg, rsquared] = polynomialFitting(LVATM_(~idxnan),RelizedVol_(~idxnan),1);
-    [prmReg2, rsquared2] = polynomialFitting(LVATM_(~idxnan),RelizedVol_(~idxnan),3);
+    [prmReg, rsquared, resid] = polynomialFitting(LVATM_(~idxnan),RelizedVol_(~idxnan),1);
+    [prmReg2, rsquared2, resid2] = polynomialFitting(LVATM_(~idxnan),RelizedVol_(~idxnan),3);
     paramReg(k,:) = prmReg;
     paramReg2(k,:) = prmReg2;
     rsq(k) = rsquared;
@@ -143,8 +143,42 @@ for k = 1:size(inputStructure.T_normalized, 2)
     ttl = sprintf('Linear regressions of Relized Vol(t) on ATM Local Vol(t) with fixed T=%s',num2str(inputStructure.T_normalized(k)));
     title(ttl);
     legend([s1;p1;p2], 'Realized vol real', 'Realized vol lin regr order1', 'Realized vol lin regr order3');
+    legend('boxoff');
+    
+    res1(k) = figure; res1(k).Visible = 'off'; res1(k).Tag = 'ATMonRealized reg';
+    s2 = scatter(LVATM(k,:), E');
+    ylabel('residuals'); xlabel('local vol');
+    hold on
+    ttl = sprintf('Analysis: Multivar regr, residuals on local vol at T=%s',num2str(inputStructure.T_normalized(k)));
+    title(ttl);
+    legend(s2, 'Residuals');
+    legend('boxoff');
 end;
 
+ % plot residuals vs indep vars
+ for k = 1:size(inputStructure.T_normalized, 2)
+
+ end;
+ 
+ % plot  residuals  vs fitted
+ res2 = figure; res2.Visible = 'off'; res2.Tag = 'ATMonRealized multivariate reg';
+ s3 = scatter(RelizedVol_model', E');
+ ylabel('residuals'); xlabel('fitted values');
+ hold on
+ ttl = sprintf('Analysis: Multivar regr, residuals on fitted values');
+ title(ttl);
+ legend(s3, 'Residuals');
+ legend('boxoff');
+ 
+ % plot histogram of residuals
+ res3 = figure; res3.Visible = 'off'; res3.Tag = 'ATMonRealized multivariate reg';
+ s4 = histogram(E',10);
+ ylabel('frequency'); xlabel('residuals');
+ hold on
+ ttl = sprintf('Analysis: Histogram of residuals');
+ title(ttl);
+ legend(s4, 'Residuals');
+ legend('boxoff');
 
 
 %% (3) Validate model on validation points (interm and extrap) with MAE (mean abs error)
@@ -197,6 +231,19 @@ for k = 1:size(inputStructure.T_normalized, 2)
     ttl = sprintf('Validation: Lin regr of Relized Vol(t) on ATM Local Vol(t), fixed T=%s',num2str(inputStructure.T_normalized(k)));
     title(ttl);
     legend([s1_v;p1_v;p2_v], 'Realized vol real', 'Realized vol lin regr order1', 'Realized vol lin regr order3');
+    legend('boxoff');
+end;
+%% visualize validation results valDate/realVol
+for l = 1:size(inputStructure.T_normalized, 2)
+    fg(l) = figure; fg(l).Visible = 'off'; fg(l).Tag = 'ATMonRealized reg';
+    s1_v = scatter(1:size(validationDates,2), realizedVol_vld(l,:));
+    hold on
+    p1_v = plot(1:size(validationDates,2), RealizedVol_model_vld(l,:)); ylabel('realized vol'); xlabel('validation Dates');
+    p2_v = plot(1:size(validationDates,2), RealizedVol_model_vld2(l,:)); ylabel('realized vol'); xlabel('validation Dates');
+    ttl = sprintf('Validation: Lin regr of Relized Vol(t) on ATM Local Vol(t), fixed T=%s',num2str(inputStructure.T_normalized(l)));
+    title(ttl);
+    legend([s1_v;p1_v;p2_v], 'Realized vol real', 'Realized vol lin regr order1', 'Realized vol lin regr order3');
+    legend('boxoff');
 end;
 
 % Calculate MAE matrix
@@ -204,7 +251,6 @@ diff_vld = (abs(realizedVol_vld-RealizedVol_model_vld))./realizedVol_vld;
 diff_vld2 = (abs(realizedVol_vld-RealizedVol_model_vld2))./realizedVol_vld;
 MSE_vld = sum(sum(diff_vld(:,:)))/(size(diff_vld,1)*size(diff_vld,2));
 MSE_vld2 = sum(sum(diff_vld2(:,:)))/(size(diff_vld2,1)*size(diff_vld2,2));
-
 
 %% (3) Generate report
 report('3.rpt','-oReportRealized.rtf','-frtf');
