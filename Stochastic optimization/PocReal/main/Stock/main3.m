@@ -209,6 +209,42 @@ MSE_vld = sum(sum(diff_vld(:,:)))/(size(diff_vld,1)*size(diff_vld,2));
 report('4.rpt','-oReportRealizedMultivar.rtf','-frtf');
 pause(7);
 
+%% Visualize stock price and aggregated plots of validation/calibration values
+S_unsorted = [S0, S0_v];
+Dates_unsorted = [calibrationDates, validationDates];
+realizedVolUnsorted = [transp(realizedVol(:,end)), transp(realizedVol_vld(:,end))];
+realizedVolModelUnsorted = [RelizedVol_model', RealizedVol_model_vld'];
+
+[DatesNumeric, sorted_index] = sort([calibrationDatesNumeric, validationDatesNumeric]);
+S = S_unsorted(sorted_index);
+Dates = Dates_unsorted(sorted_index);
+RealizedVOL = realizedVolUnsorted(sorted_index);
+RealizedVOLModel = realizedVolModelUnsorted(sorted_index);
+
+dt  =datenum(calibrationDates, 'mm/dd/yyyy');
+figure; scatter(dt, 1:10); hold on;
+datetick('x',29)
+
+f6 = figure; f6.Visible = 'off'; f6.Tag = 'AggregatedPlots';
+s1 = scatter(datetime(Dates), S);
+hold on
+ylabel('Spot'); xlabel('Dates');
+ttl = sprintf('Stock spot price');
+title(ttl);
+
+f7 = figure; f7.Visible = 'off'; f7.Tag = 'AggregatedPlots';
+s1 = scatter(datetime(Dates), RealizedVOL, 'blue');
+hold on
+p1 = scatter(datetime(Dates), RealizedVOLModel, 'red');
+ylabel('Realized Vol'); xlabel('Dates');
+ttl = sprintf('Realized vol models/true with predictions');
+legend([s1;p1], 'Realized vol real', 'Realized vol modeled');
+title(ttl);
+
+report('aggr.rpt','-oReportAggregated.rtf','-frtf');
+pause(7);
+
+
 %%  close all; % close all figures
 delete(findall(0));
 
