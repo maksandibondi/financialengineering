@@ -48,6 +48,7 @@ inputStructure.isNormalizedScale = 1;
 inputStructure.T_normalized = [0.05, 0.1, 0.15, 0.2, 0.25, 0.4];
 inputStructure.K_normalized = 100:5:230;
 
+Stock_normalization_factor = 1000;  % as price is around 100 (for affichage only)
 calibrationDates = {'01/03/2020', '01/10/2020', '01/24/2020', '01/31/2020', '02/07/2020',  '02/28/2020', '03/06/2020',  '03/20/2020', '03/27/2020', '04/03/2020'};
 validationDates = {'01/17/2020','02/14/2020', '02/21/2020', '03/13/2020', '04/09/2020', '04/17/2020'};
 
@@ -131,15 +132,15 @@ for k = 1:size(inputStructure.T_normalized, 2)
     paramReg2(k,:) = prmReg2;
     rsq(k) = rsquared;
     rsq2(k) = rsquared2;
-    RelizedVol_model = polyval(paramReg(k,:),LVATM_(~idxnan)); %% values obtained by model
-    RelizedVol_model2 = polyval(paramReg2(k,:),LVATM_(~idxnan)); %% values obtained by model    
+    RelizedVol_model(k,:) = polyval(paramReg(k,:),LVATM_(~idxnan)); %% values obtained by model
+    RelizedVol_model2(k,:) = polyval(paramReg2(k,:),LVATM_(~idxnan)); %% values obtained by model    
 
 %% visualize regression results
     f1(k) = figure; f1(k).Visible = 'off'; f1(k).Tag = 'ATMonRealized reg';
     s1 = scatter(LVATM_(~idxnan), RelizedVol_(~idxnan));
     hold on
-    p1 = plot(LVATM_(~idxnan),RelizedVol_model); ylabel('realized vol'); xlabel('LVATM');
-    p2 = plot(LVATM_(~idxnan),RelizedVol_model2); ylabel('realized vol'); xlabel('LVATM');
+    p1 = plot(LVATM_(~idxnan),RelizedVol_model(k,:)); ylabel('realized vol'); xlabel('LVATM');
+    p2 = plot(LVATM_(~idxnan),RelizedVol_model2(k,:)); ylabel('realized vol'); xlabel('LVATM');
     ttl = sprintf('Linear regressions of Relized Vol(t) on ATM Local Vol(t) with fixed T=%s',num2str(inputStructure.T_normalized(k)));
     title(ttl);
     legend([s1;p1;p2], 'Realized vol real', 'Realized vol lin regr order1', 'Realized vol lin regr order3');
@@ -255,11 +256,42 @@ diff_vld = (abs(realizedVol_vld-RealizedVol_model_vld))./realizedVol_vld;
 diff_vld2 = (abs(realizedVol_vld-RealizedVol_model_vld2))./realizedVol_vld;
 MSE_vld = sum(sum(diff_vld(:,:)))/(size(diff_vld,1)*size(diff_vld,2));
 MSE_vld2 = sum(sum(diff_vld2(:,:)))/(size(diff_vld2,1)*size(diff_vld2,2));
-
 %% (3) Generate report
 report('3.rpt','-oReportRealized.rtf','-frtf');
 pause(7);
 
+%% Visualize stock price and aggregated plots of validation/calibration values
+[DatesNumeric, sorted_index] = sort([calibrationDatesNumeric, validationDatesNumeric]);
+S_unsorted = [S0, S0_v];
+S = S_unsorted(sorted_index);
+Dates_unsorted = [calibrationDates, validationDates];
+Dates = Dates_unsorted(sorted_index);
+
+for k = 1:size(inputStructure.T_normalized, 2)
+    realizedVolUnsorted = [transp(realizedVol(:,k)), realizedVol_vld(k,:)];
+    realizedVolModelUnsorted = [RelizedVol_model(k,:), RealizedVol_model_vld(k,:)];
+    realizedVolModelUnsorted2 = [RelizedVol_model(k,:), RealizedVol_model_vld2(k,:)];
+    RealizedVOL = realizedVolUnsorted(sorted_index);
+    RealizedVOLModel = realizedVolModelUnsorted(sorted_index);
+    RealizedVOLModel2 = realizedVolModelUnsorted2(sorted_index);
+
+    f8(k) = figure; f8(k).Visible = 'off'; f8(k).Tag = 'AggregatedPlots';
+    s1 = scatter(datenum(Dates,'mm/dd/yyyy'), RealizedVOL);
+    hold on
+    s2 = scatter(datenum(Dates,'mm/dd/yyyy'), RealizedVOLModel);
+    s3 = scatter(datenum(Dates,'mm/dd/yyyy'), RealizedVOLModel2);
+    p1 = plot(datenum(Dates,'mm/dd/yyyy'), S/Stock_normalization_factor);
+    
+    ylabel('Realized Vol'); xlabel('Dates');  set(gca,'xtick',datenum(Dates,'mm/dd/yyyy')); set(gca,'FontSize',4); datetick('x',29,'keepticks');
+    ttl = sprintf('Realized vol models/true with predictions with fixed T=%s', num2str(inputStructure.T_normalized(k)));
+    legend([s1;s2;s3;p1], 'Realized vol real', 'Realized vol modeled','Realized vol modeled 3rd order', 'Stock spot price');
+    title(ttl);
+
+end;
+
+report('aggr.rpt','-oReportAggregatedRealVol.rtf','-frtf');
+pause(7);
+
 %%  close all; % close all figures
-   delete(findall(0));
+delete(findall(0));
 

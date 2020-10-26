@@ -48,6 +48,7 @@ inputStructure.isNormalizedScale = 1;
 inputStructure.T_normalized = [0.05, 0.1, 0.15, 0.2, 0.25, 0.4];
 inputStructure.K_normalized = 100:5:230;
 
+Stock_normalization_factor = 1000;  % as price is around 100 (for affichage only)
 calibrationDates = {'01/03/2020', '01/10/2020', '01/24/2020', '01/31/2020', '02/07/2020',  '02/28/2020', '03/06/2020',  '03/20/2020', '03/27/2020', '04/03/2020'};
 validationDates = {'01/17/2020','02/14/2020', '02/21/2020', '03/13/2020', '04/09/2020', '04/17/2020'};
 %% Prepare numeric calibration and validation dates
@@ -124,14 +125,14 @@ for k = 1:size(inputStructure.T_normalized, 2)
     paramReg2(k,:) = prmReg2; 
     rsq(k) = rsquared;
     rsq2(k) = rsquared2;
-    LVAMT_model = polyval(paramReg(k,:),calibrationDatesNumeric(~idxnan)); %% values obtained by model
-    LVAMT_model2 = polyval(paramReg2(k,:),calibrationDatesNumeric(~idxnan)); %% values obtained by model
+    LVAMT_model(k,:) = polyval(paramReg(k,:),calibrationDatesNumeric(~idxnan)); %% values obtained by model
+    LVAMT_model2(k,:) = polyval(paramReg2(k,:),calibrationDatesNumeric(~idxnan)); %% values obtained by model
     %% visualize regression results
     f1(k) = figure; f1(k).Visible = 'off'; f1(k).Tag = 'ATMonTime reg';
     s1 = scatter(calibrationDatesNumeric(~idxnan),LVATM_(~idxnan));
     hold on
-    p1 = plot(calibrationDatesNumeric(~idxnan),LVAMT_model); xlabel('t'); ylabel('LVATM');
-    p2 = plot(calibrationDatesNumeric(~idxnan),LVAMT_model2); xlabel('t'); ylabel('LVATM');
+    p1 = plot(calibrationDatesNumeric(~idxnan),LVAMT_model(k,:)); xlabel('t'); ylabel('LVATM');
+    p2 = plot(calibrationDatesNumeric(~idxnan),LVAMT_model2(k,:)); xlabel('t'); ylabel('LVATM');
     ttl = sprintf('Linear regressions of ATM Local Vol on calibration date t for fixed T=%s',num2str(inputStructure.T_normalized(k)));
     title(ttl);
     legend([s1;p1;p2], 'LV ATM real', 'LV ATM lin regr order1', 'LV ATM lin regr order3');
@@ -175,6 +176,7 @@ for k = 1:size(inputStructure.T_normalized, 2)
 end;
 % Conclusion : sometimes negative coef of determination, bad fitting
 
+
 %% (1) Validate model on validation points (interm and extrap) with MAE (mean abs error)
  % calculate model values
 for k = 1:size(inputStructure.T_normalized, 2)
@@ -209,7 +211,6 @@ end;
    diff_vld2 = (abs(LVATM_vld-LVATM_model_vld2))./LVATM_vld;
    MSE_vld = sum(sum(diff_vld(:,:)))/(size(diff_vld,1)*size(diff_vld,2));
    MSE_vld2 = sum(sum(diff_vld2(:,:)))/(size(diff_vld2,1)*size(diff_vld2,2));
-  
    %% visualize validation results valDate/localVol
 for l = 1:size(inputStructure.T_normalized, 2)
     f6(l) = figure; f6(l).Visible = 'off'; f6(l).Tag = 'ATMonTime reg';
@@ -222,7 +223,6 @@ for l = 1:size(inputStructure.T_normalized, 2)
     legend([s1_v;p1_v;p2_v], 'local vol real', 'local vol lin regr order1', 'local vol lin regr order3');
     legend('boxoff');
 end;
-   
 %% (1) Generate report
    report('1.rpt','-oReportLVonDates.rtf','-frtf');
    pause(7);
@@ -241,15 +241,15 @@ for k = 1:size(inputStructure.T_normalized, 2)
     paramReg2(k,:) = prmReg2;
     rsq(k) = rsquared;
     rsq2(k) = rsquared2;
-    VolImpATM_model = polyval(paramReg(k,:),LVATM_(~idxnan)); %% values obtained by model
-    VolImpATM_model2 = polyval(paramReg2(k,:),LVATM_(~idxnan)); %% values obtained by model    
+    VolImpATM_model(k,:) = polyval(paramReg(k,:),LVATM_(~idxnan)); %% values obtained by model
+    VolImpATM_model2(k,:) = polyval(paramReg2(k,:),LVATM_(~idxnan)); %% values obtained by model    
 
     %% visualize regression results
     f7(k) = figure; f7(k).Visible = 'off'; f7(k).Tag = 'ATMonImplied reg';
     s1 = scatter(LVATM_(~idxnan),VolImpATM_(~idxnan));
     hold on
-    p1 = plot(LVATM_(~idxnan),VolImpATM_model(~idxnan)); ylabel('impvol ATM'); xlabel('LVATM');
-    p2 = plot(LVATM_(~idxnan),VolImpATM_model2(~idxnan)); ylabel('impvol ATM'); xlabel('LVATM');
+    p1 = plot(LVATM_(~idxnan),VolImpATM_model(k,:)); ylabel('impvol ATM'); xlabel('LVATM');
+    p2 = plot(LVATM_(~idxnan),VolImpATM_model2(k,:)); ylabel('impvol ATM'); xlabel('LVATM');
     ttl = sprintf('Linear regressions of Implied vol(t) on ATM Local Vol(t) with fixed T=%s',num2str(inputStructure.T_normalized(k)));
     title(ttl);
     legend([s1;p1;p2], 'Implied vol real', 'Implied vol lin regr order1', 'Implied vol lin regr order3');
@@ -292,6 +292,7 @@ for k = 1:size(inputStructure.T_normalized, 2)
     legend('boxoff');
 end;
 % Conclusion : sometimes negative coef of determination, bad fitting
+
 
 %% (2) Validate model on validation points (interm and extrap) with MAE (mean abs error)
 % calculate implied vol real values on validation points
@@ -340,7 +341,6 @@ diff_vld = (abs(VolImpATM_vld-VolImpATM_model_vld))./VolImpATM_vld;
 diff_vld2 = (abs(VolImpATM_vld-VolImpATM_model_vld2))./VolImpATM_vld;
 MSE_vld = sum(sum(diff_vld(:,:)))/(size(diff_vld,1)*size(diff_vld,2));
 MSE_vld2 = sum(sum(diff_vld2(:,:)))/(size(diff_vld2,1)*size(diff_vld2,2));
-
  %% visualize validation results localVol/impliedVol
 for l = 1:size(inputStructure.T_normalized, 2)
     [LVATM_vld_, sortedIndex] = sort(LVATM_vld(k,:));
@@ -357,12 +357,62 @@ for l = 1:size(inputStructure.T_normalized, 2)
     legend([s1_v;p1_v;p2_v], 'local vol real', 'local vol lin regr order1', 'local vol lin regr order3');
     legend('boxoff');
 end;
-
 %% (2) Generate report
    report('2.rpt','-oReportImpVolonLV.rtf','-frtf');
    pause(7);
    
- 
+   
+%% Visualize stock price and aggregated plots of validation/calibration values
+[DatesNumeric, sorted_index] = sort([calibrationDatesNumeric, validationDatesNumeric]);
+S_unsorted = [S0, S0_v];
+S = S_unsorted(sorted_index);
+Dates_unsorted = [calibrationDates, validationDates];
+Dates = Dates_unsorted(sorted_index);
+
+for k = 1:size(inputStructure.T_normalized, 2)
+    % show modeled and real local and implied vols
+    localVolUnsorted = [LVATM(k,:), LVATM_vld(k,:)];
+    localVolModelUnsorted = [LVAMT_model(k,:), LVATM_model_vld(k,:)];
+    localVolModelUnsorted2 = [LVAMT_model2(k,:), LVATM_model_vld2(k,:)];
+    impVolUnsorted = [VolImpATM(k,:), VolImp_vld(k,:)];
+    impVolModelUnsorted = [VolImpATM_model(k,:), VolImpATM_model_vld(k,:)];
+    impVolModelUnsorted2 = [VolImpATM_model2(k,:), VolImpATM_model_vld2(k,:)];
+    
+    localVOL = localVolUnsorted(sorted_index);
+    localVOLModel = localVolModelUnsorted(sorted_index);
+    localVOLModel2 = localVolModelUnsorted2(sorted_index);
+    impVOL = impVolUnsorted(sorted_index);
+    impVOLModel = impVolModelUnsorted(sorted_index);
+    impVOLModel2 = impVolModelUnsorted2(sorted_index);
+
+    f13(k) = figure; f13(k).Visible = 'off'; f13(k).Tag = 'AggregatedPlots';
+    s1 = scatter(datenum(Dates,'mm/dd/yyyy'), localVOL);
+    hold on
+    s2 = scatter(datenum(Dates,'mm/dd/yyyy'), localVOLModel);
+    s3 = scatter(datenum(Dates,'mm/dd/yyyy'), localVOLModel2);
+    p1 = plot(datenum(Dates,'mm/dd/yyyy'), S/Stock_normalization_factor);
+    
+    ylabel('Local Vol'); xlabel('Dates');  set(gca,'xtick',datenum(Dates,'mm/dd/yyyy')); set(gca,'FontSize',4); datetick('x',29,'keepticks');
+    ttl = sprintf('Local vol on time models/true with predictions with fixed T=%s', num2str(inputStructure.T_normalized(k)));
+    legend([s1;s2;s3;p1], 'Local vol calibrated', 'Local vol modeled', 'Local vol modeled 3rd order','Stock spot price');
+    title(ttl);
+    
+    f14(k) = figure; f14(k).Visible = 'off'; f14(k).Tag = 'AggregatedPlots';
+    s1 = scatter(datenum(Dates,'mm/dd/yyyy'), impVOL);
+    hold on
+    s2 = scatter(datenum(Dates,'mm/dd/yyyy'), impVOLModel);
+    s3 = scatter(datenum(Dates,'mm/dd/yyyy'), impVOLModel2);
+    p1 = plot(datenum(Dates,'mm/dd/yyyy'), S/Stock_normalization_factor);
+    
+    ylabel('Imp Vol'); xlabel('Dates');  set(gca,'xtick',datenum(Dates,'mm/dd/yyyy')); set(gca,'FontSize',4); datetick('x',29,'keepticks');
+    ttl = sprintf('Implied vol on LocalVol models/true with predictions with fixed T=%s', num2str(inputStructure.T_normalized(k)));
+    legend([s1;s2;s3;p1], 'Imp vol calibrated', 'Imp vol modeled', 'Imp vol modeled 3rd order','Stock spot price');
+    title(ttl);
+
+end;
+
+report('aggr.rpt','-oReportAggregatedLVonDatesImp.rtf','-frtf');
+pause(7); 
    
    
 %% close all; % close all figures

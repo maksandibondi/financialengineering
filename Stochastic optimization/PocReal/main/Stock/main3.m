@@ -44,6 +44,7 @@ inputStructure.isNormalizedScale = 1;
 inputStructure.T_normalized = [0.05, 0.1, 0.15, 0.2, 0.25, 0.4];
 inputStructure.K_normalized = 100:5:230;
 
+Stock_normalization_factor = 1000;  % as price is around 100 (for affichage only)
 calibrationDates = {'01/03/2020', '01/10/2020', '01/24/2020', '01/31/2020', '02/07/2020',  '02/28/2020', '03/06/2020',  '03/20/2020', '03/27/2020', '04/03/2020'};
 validationDates = {'01/17/2020','02/14/2020', '02/21/2020', '03/13/2020', '04/09/2020', '04/17/2020'};
 
@@ -114,7 +115,6 @@ report('0.rpt','-oReportCalibRealizedVolMultivar.rtf','-frtf');
 pause(7);
 
 
-
 %% (3) Regress (multivariate) ATM Local Volatility on realized T volatility of S for FIXED maturity for all calib dates
 RelizedVol_ = realizedVol(:,end); % last value of realized vol
 LVATM_ = LVATM(:,:)';
@@ -163,6 +163,7 @@ RelizedVol_model = LVATM_*paramReg;
  legend(s4, 'Residuals');
  legend('boxoff');
  
+ 
 %% (3) Validate model on validation points (interm and extrap) with MAE (mean abs error)
 % calculate realized vol values on validation points
 for i = 1:size(validationDates,2);
@@ -204,7 +205,6 @@ MSE_vld = sum(sum(diff_vld(:,:)))/(size(diff_vld,1)*size(diff_vld,2));
     title(ttl);
     legend([s1_v;p1_v], 'Realized vol real', 'Realized vol multivar lin regr order1');
     legend('boxoff');
-
 %% (3) Generate report
 report('4.rpt','-oReportRealizedMultivar.rtf','-frtf');
 pause(7);
@@ -221,27 +221,18 @@ Dates = Dates_unsorted(sorted_index);
 RealizedVOL = realizedVolUnsorted(sorted_index);
 RealizedVOLModel = realizedVolModelUnsorted(sorted_index);
 
-dt  =datenum(calibrationDates, 'mm/dd/yyyy');
-figure; scatter(dt, 1:10); hold on;
-datetick('x',29)
-
-f6 = figure; f6.Visible = 'off'; f6.Tag = 'AggregatedPlots';
-s1 = scatter(datetime(Dates), S);
-hold on
-ylabel('Spot'); xlabel('Dates');
-ttl = sprintf('Stock spot price');
-title(ttl);
-
 f7 = figure; f7.Visible = 'off'; f7.Tag = 'AggregatedPlots';
-s1 = scatter(datetime(Dates), RealizedVOL, 'blue');
+s1 = scatter(datenum(Dates,'mm/dd/yyyy'), RealizedVOL);
 hold on
-p1 = scatter(datetime(Dates), RealizedVOLModel, 'red');
-ylabel('Realized Vol'); xlabel('Dates');
+s2 = scatter(datenum(Dates,'mm/dd/yyyy'), RealizedVOLModel);
+p1 = plot(datenum(Dates,'mm/dd/yyyy'), S/Stock_normalization_factor);
+
+ylabel('Realized Vol'); xlabel('Dates');  set(gca,'xtick',datenum(Dates,'mm/dd/yyyy')); set(gca,'FontSize',4); datetick('x',29,'keepticks');
 ttl = sprintf('Realized vol models/true with predictions');
-legend([s1;p1], 'Realized vol real', 'Realized vol modeled');
+legend([s1;s2;p1], 'Realized vol real', 'Realized vol modeled','Stock spot price');
 title(ttl);
 
-report('aggr.rpt','-oReportAggregated.rtf','-frtf');
+report('aggr.rpt','-oReportAggregatedRealVolMultivar.rtf','-frtf');
 pause(7);
 
 
