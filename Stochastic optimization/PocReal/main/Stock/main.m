@@ -46,11 +46,17 @@ inputStructure.outputdir = fullfile(pwd,'../../Results/Results_MSFT');
 inputStructure.visualizeResults = 0;
 inputStructure.isNormalizedScale = 1;
 inputStructure.T_normalized = [0.05, 0.1, 0.15, 0.2, 0.25, 0.4];
+%inputStructure.T_normalized = [0.05, 0.1, 0.15, 0.2, 0.25, 0.4];
 inputStructure.K_normalized = 100:5:230;
 
 Stock_normalization_factor = 1000;  % as price is around 100 (for affichage only)
-calibrationDates = {'01/03/2020', '01/10/2020', '01/24/2020', '01/31/2020', '02/07/2020',  '02/28/2020', '03/06/2020',  '03/20/2020', '03/27/2020', '04/03/2020'};
-validationDates = {'01/17/2020','02/14/2020', '02/21/2020', '03/13/2020', '04/09/2020', '04/17/2020'};
+
+calibrationDates = {'01/03/2020', '01/10/2020', '01/17/2020', '01/24/2020', '01/31/2020', '02/07/2020', '02/14/2020', '02/21/2020','02/28/2020', '03/06/2020'};
+validationDates = { '03/13/2020', '03/20/2020', '03/27/2020', '04/03/2020', '04/09/2020', '04/17/2020'};
+
+%%calibrationDates = {'01/03/2020', '01/10/2020', '01/24/2020', '01/31/2020', '02/07/2020',  '02/28/2020', '03/06/2020',  '03/20/2020', '03/27/2020', '04/03/2020'};
+%%validationDates = {'01/17/2020','02/14/2020', '02/21/2020', '03/13/2020', '04/09/2020', '04/17/2020'};
+
 %% Prepare numeric calibration and validation dates
 calibrationDatesNumeric(1) = 0;
 for i = 2:size(calibrationDates,2) % get numeric values for calibration dates vector
@@ -386,32 +392,37 @@ for k = 1:size(inputStructure.T_normalized, 2)
     impVOLModel2 = impVolModelUnsorted2(sorted_index);
 
     f13(k) = figure; f13(k).Visible = 'off'; f13(k).Tag = 'AggregatedPlots';
+    subplot(2,1,1);
     s1 = scatter(datenum(Dates,'mm/dd/yyyy'), localVOL);
     hold on
     s2 = scatter(datenum(Dates,'mm/dd/yyyy'), localVOLModel);
-    s3 = scatter(datenum(Dates,'mm/dd/yyyy'), localVOLModel2);
-    p1 = plot(datenum(Dates,'mm/dd/yyyy'), S/Stock_normalization_factor);
-    
+    s3 = scatter(datenum(Dates,'mm/dd/yyyy'), localVOLModel2);    
     ylabel('Local Vol'); xlabel('Dates');  set(gca,'xtick',datenum(Dates,'mm/dd/yyyy')); set(gca,'FontSize',4); datetick('x',29,'keepticks');
     ttl = sprintf('Local vol on time models/true with predictions with fixed T=%s', num2str(inputStructure.T_normalized(k)));
-    legend([s1;s2;s3;p1], 'Local vol calibrated', 'Local vol modeled', 'Local vol modeled 3rd order','Stock spot price');
+    legend([s1;s2;s3], 'Local vol calibrated', 'Local vol modeled', 'Local vol modeled 3rd order');
     title(ttl);
+    
+    subplot(2,1,2); 
+    p1 = plot(datenum(Dates,'mm/dd/yyyy'), S);
+    ylabel('Stcok Spot Price'); xlabel('Dates');  set(gca,'xtick',datenum(Dates,'mm/dd/yyyy')); set(gca,'FontSize',4); datetick('x',29,'keepticks');
     
     f14(k) = figure; f14(k).Visible = 'off'; f14(k).Tag = 'AggregatedPlots';
+    subplot(2,1,1);
     s1 = scatter(datenum(Dates,'mm/dd/yyyy'), impVOL);
     hold on
-    s2 = scatter(datenum(Dates,'mm/dd/yyyy'), impVOLModel);
-    s3 = scatter(datenum(Dates,'mm/dd/yyyy'), impVOLModel2);
-    p1 = plot(datenum(Dates,'mm/dd/yyyy'), S/Stock_normalization_factor);
-    
+    s2 = plot(datenum(Dates,'mm/dd/yyyy'), impVOLModel);
+    s3 = plot(datenum(Dates,'mm/dd/yyyy'), impVOLModel2);
     ylabel('Imp Vol'); xlabel('Dates');  set(gca,'xtick',datenum(Dates,'mm/dd/yyyy')); set(gca,'FontSize',4); datetick('x',29,'keepticks');
     ttl = sprintf('Implied vol on LocalVol models/true with predictions with fixed T=%s', num2str(inputStructure.T_normalized(k)));
-    legend([s1;s2;s3;p1], 'Imp vol calibrated', 'Imp vol modeled', 'Imp vol modeled 3rd order','Stock spot price');
+    legend([s1;s2;s3], 'Imp vol calibrated', 'Imp vol modeled', 'Imp vol modeled 3rd order');
     title(ttl);
-
+    
+    subplot(2,1,2); 
+    p1 = plot(datenum(Dates,'mm/dd/yyyy'), S/Stock_normalization_factor);
+    ylabel('Stock spot price'); xlabel('Dates');  set(gca,'xtick',datenum(Dates,'mm/dd/yyyy')); set(gca,'FontSize',4); datetick('x',29,'keepticks');
 end;
 
-report('aggr.rpt','-oReportAggregatedLVonDatesImp.rtf','-frtf');
+report('aggr0.rpt','-oReportAggregatedLVonDatesImp.rtf','-frtf');
 pause(7); 
    
    

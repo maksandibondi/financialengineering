@@ -45,8 +45,9 @@ inputStructure.T_normalized = [0.05, 0.1, 0.15, 0.2, 0.25, 0.4];
 inputStructure.K_normalized = 100:5:230;
 
 Stock_normalization_factor = 1000;  % as price is around 100 (for affichage only)
-calibrationDates = {'01/03/2020', '01/10/2020', '01/24/2020', '01/31/2020', '02/07/2020',  '02/28/2020', '03/06/2020',  '03/20/2020', '03/27/2020', '04/03/2020'};
-validationDates = {'01/17/2020','02/14/2020', '02/21/2020', '03/13/2020', '04/09/2020', '04/17/2020'};
+
+calibrationDates = {'01/03/2020', '01/10/2020', '01/17/2020', '01/24/2020', '01/31/2020', '02/07/2020', '02/14/2020', '02/21/2020','02/28/2020', '03/06/2020'};
+validationDates = { '03/13/2020', '03/20/2020', '03/27/2020', '04/03/2020', '04/09/2020', '04/17/2020'};
 
 %% Prepare numeric calibration and validation dates
 calibrationDatesNumeric(1) = 0;
@@ -222,15 +223,18 @@ RealizedVOL = realizedVolUnsorted(sorted_index);
 RealizedVOLModel = realizedVolModelUnsorted(sorted_index);
 
 f7 = figure; f7.Visible = 'off'; f7.Tag = 'AggregatedPlots';
-s1 = scatter(datenum(Dates,'mm/dd/yyyy'), RealizedVOL);
+subplot(2,1,1);
+s1 = plot(datenum(Dates,'mm/dd/yyyy'), RealizedVOL);
 hold on
-s2 = scatter(datenum(Dates,'mm/dd/yyyy'), RealizedVOLModel);
-p1 = plot(datenum(Dates,'mm/dd/yyyy'), S/Stock_normalization_factor);
+s2 = plot(datenum(Dates,'mm/dd/yyyy'), RealizedVOLModel);
 
 ylabel('Realized Vol'); xlabel('Dates');  set(gca,'xtick',datenum(Dates,'mm/dd/yyyy')); set(gca,'FontSize',4); datetick('x',29,'keepticks');
 ttl = sprintf('Realized vol models/true with predictions');
-legend([s1;s2;p1], 'Realized vol real', 'Realized vol modeled','Stock spot price');
+legend([s1;s2], 'Realized vol real', 'Realized vol modeled');
 title(ttl);
+subplot(2,1,2);
+p1 = plot(datenum(Dates,'mm/dd/yyyy'), S);
+ylabel('Spot Stock price'); xlabel('Dates');  set(gca,'xtick',datenum(Dates,'mm/dd/yyyy')); set(gca,'FontSize',4); datetick('x',29,'keepticks');
 
 report('aggr.rpt','-oReportAggregatedRealVolMultivar.rtf','-frtf');
 pause(7);
