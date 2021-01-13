@@ -49,6 +49,9 @@ inputStructure.T_normalized = [0.05, 0.1, 0.15, 0.2, 0.25, 0.4];
 inputStructure.K_normalized = 100:5:230;
 
 Stock_normalization_factor = 1000;  % as price is around 100 (for affichage only)
+ 
+%calibrationDates = {'01/03/2020', '01/10/2020', '01/24/2020', '01/31/2020', '02/07/2020',  '02/28/2020', '03/06/2020',  '03/20/2020', '03/27/2020', '04/03/2020'};
+%validationDates = {'01/17/2020','02/14/2020', '02/21/2020', '03/13/2020', '04/09/2020', '04/17/2020'};
 
 calibrationDates = {'01/03/2020', '01/10/2020', '01/17/2020', '01/24/2020', '01/31/2020', '02/07/2020', '02/14/2020', '02/21/2020','02/28/2020', '03/06/2020'};
 validationDates = { '03/13/2020', '03/20/2020', '03/27/2020', '04/03/2020', '04/09/2020', '04/17/2020'};
@@ -127,12 +130,18 @@ for k = 1:size(inputStructure.T_normalized, 2)
     RelizedVol_ = realizedVol(:,k)';
     RealizedVol_ = RelizedVol_(sortedIndex);
     idxnan = isnan(LVATM_); %% find indices with non NAN values
-    [prmReg, rsquared, resid] = polynomialFitting(LVATM_(~idxnan),RelizedVol_(~idxnan),1);
-    [prmReg2, rsquared2, resid2] = polynomialFitting(LVATM_(~idxnan),RelizedVol_(~idxnan),3);
+    [prmReg, rsquared, resid, mdl] = polynomialFitting(LVATM_(~idxnan),RelizedVol_(~idxnan),1);
+    [prmReg2, rsquared2, resid2, mdl2] = polynomialFitting(LVATM_(~idxnan),RelizedVol_(~idxnan),3);
     paramReg(k,:) = prmReg;
     paramReg2(k,:) = prmReg2;
     rsq(k) = rsquared;
     rsq2(k) = rsquared2;
+    stat{k} = mdl;
+    stat2{k} = mdl2;
+    anov{k} = anova(mdl);
+    anov2{k} = anova(mdl2);
+    [pvaldw{k},DW{k}] = dwtest(mdl,'exact','both');
+    [pvaldw2{k},DW2{k}] = dwtest(mdl2,'exact','both');
     RelizedVol_model(k,:) = polyval(paramReg(k,:),LVATM_(~idxnan)); %% values obtained by model
     RelizedVol_model2(k,:) = polyval(paramReg2(k,:),LVATM_(~idxnan)); %% values obtained by model    
 
@@ -183,6 +192,17 @@ for k = 1:size(inputStructure.T_normalized, 2)
     title(ttl);
     legend(s5, 'Residuals');
     legend('boxoff');
+    % Normal distribution of residuals
+    fig(1) = figure; fig(1).Visible = 'off'; fig(1).Tag = 'ATMonRealized reg';
+    fig = plotResiduals(mdl,'probability');
+    ttl = sprintf('Analysis: Proba plot of residuals, T=%s',num2str(inputStructure.T_normalized(k)));
+    title(ttl);
+    % Normal distribution of residuals 3rd order
+    fig(2) = figure; fig(2).Visible = 'off'; fig(2).Tag = 'ATMonRealized reg';
+    fig = plotResiduals(mdl2,'probability');
+    ttl = sprintf('Analysis: Proba plot of residuals 3rd order, T=%s',num2str(inputStructure.T_normalized(k)));
+    title(ttl);    
+
 
 end;
  
@@ -285,11 +305,13 @@ for k = 1:size(inputStructure.T_normalized, 2)
     ylabel('Realized Vol'); xlabel('Dates');  set(gca,'xtick',datenum(Dates,'mm/dd/yyyy')); set(gca,'FontSize',4); datetick('x',29,'keepticks');
     ttl = sprintf('Realized vol models/true with predictions with fixed T=%s', num2str(inputStructure.T_normalized(k)));
     legend([s1;s2;s3], 'Realized vol real', 'Realized vol modeled','Realized vol modeled 3rd order');
+    legend('boxoff');
+    
     title(ttl);
     subplot(2,1,2);  
     p1 = plot(datenum(Dates,'mm/dd/yyyy'), S);
     ylabel('Stock Spot Price'); xlabel('Dates');  set(gca,'xtick',datenum(Dates,'mm/dd/yyyy')); set(gca,'FontSize',4); datetick('x',29,'keepticks');
-
+    legend('boxoff');
 end;
 
 report('aggr.rpt','-oReportAggregatedRealVol.rtf','-frtf');

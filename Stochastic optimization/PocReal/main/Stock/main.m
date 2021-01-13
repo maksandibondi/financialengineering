@@ -1,9 +1,10 @@
 % In this file we make a run and study the relation between ATM local vol
-% and Implied volatility, Calibration Dates independent variables,
+% and Implied volatility, Calibration Dates independent variables for each maturity,
 % generating reports
 clear;
 % Intermediate res: calculated local vol( K,T ) for every T0 on input 
-% Final res: Regression on local vol(K,T) near the money 
+% Final res: Regression on local vol(K,T) near the money . one regression
+% by maturity
 
 
 % Verifications: does local vol "explain" VIX
@@ -51,11 +52,11 @@ inputStructure.K_normalized = 100:5:230;
 
 Stock_normalization_factor = 1000;  % as price is around 100 (for affichage only)
 
-calibrationDates = {'01/03/2020', '01/10/2020', '01/17/2020', '01/24/2020', '01/31/2020', '02/07/2020', '02/14/2020', '02/21/2020','02/28/2020', '03/06/2020'};
-validationDates = { '03/13/2020', '03/20/2020', '03/27/2020', '04/03/2020', '04/09/2020', '04/17/2020'};
+%calibrationDates = {'01/03/2020', '01/10/2020', '01/17/2020', '01/24/2020', '01/31/2020', '02/07/2020', '02/14/2020', '02/21/2020','02/28/2020', '03/06/2020'};
+%validationDates = { '03/13/2020', '03/20/2020', '03/27/2020', '04/03/2020', '04/09/2020', '04/17/2020'};
 
-%%calibrationDates = {'01/03/2020', '01/10/2020', '01/24/2020', '01/31/2020', '02/07/2020',  '02/28/2020', '03/06/2020',  '03/20/2020', '03/27/2020', '04/03/2020'};
-%%validationDates = {'01/17/2020','02/14/2020', '02/21/2020', '03/13/2020', '04/09/2020', '04/17/2020'};
+calibrationDates = {'01/03/2020', '01/10/2020', '01/24/2020', '01/31/2020', '02/07/2020',  '02/28/2020', '03/06/2020',  '03/20/2020', '03/27/2020', '04/03/2020'};
+validationDates = {'01/17/2020','02/14/2020', '02/21/2020', '03/13/2020', '04/09/2020', '04/17/2020'};
 
 %% Prepare numeric calibration and validation dates
 calibrationDatesNumeric(1) = 0;
@@ -120,17 +121,27 @@ report('0.rpt','-oReportCalibLVonDates.rtf','-frtf');
 pause(7);
 
 
+stat = cell(size(inputStructure.T_normalized, 2), 1);
+stat2 = cell(size(inputStructure.T_normalized, 2), 1);
+anov = cell(size(inputStructure.T_normalized, 2), 1);
+anov2 = cell(size(inputStructure.T_normalized, 2), 1);
 
 %% (1) Regress ATM Local Volatility on calibration dates for each maturity 
 for k = 1:size(inputStructure.T_normalized, 2)
     LVATM_ = LVATM(k,:);
     idxnan = isnan(LVATM_); %% find indices with non NAN values
-    [prmReg, rsquared, resid] = polynomialFitting(calibrationDatesNumeric(~idxnan),LVATM_(~idxnan),1);
-    [prmReg2, rsquared2, resid2] = polynomialFitting(calibrationDatesNumeric(~idxnan),LVATM_(~idxnan),3);
+    [prmReg, rsquared, resid, mdl] = polynomialFitting(calibrationDatesNumeric(~idxnan),LVATM_(~idxnan),1);
+    [prmReg2, rsquared2, resid2, mdl2] = polynomialFitting(calibrationDatesNumeric(~idxnan),LVATM_(~idxnan),3);
     paramReg(k,:) = prmReg;
     paramReg2(k,:) = prmReg2; 
     rsq(k) = rsquared;
     rsq2(k) = rsquared2;
+    stat{k} = mdl;
+    stat2{k} = mdl2;
+    anov{k} = anova(mdl);
+    anov2{k} = anova(mdl2);
+    [pvaldw{k},DW{k}] = dwtest(mdl,'exact','both');
+    [pvaldw2{k},DW2{k}] = dwtest(mdl2,'exact','both');
     LVAMT_model(k,:) = polyval(paramReg(k,:),calibrationDatesNumeric(~idxnan)); %% values obtained by model
     LVAMT_model2(k,:) = polyval(paramReg2(k,:),calibrationDatesNumeric(~idxnan)); %% values obtained by model
     %% visualize regression results
@@ -142,6 +153,7 @@ for k = 1:size(inputStructure.T_normalized, 2)
     ttl = sprintf('Linear regressions of ATM Local Vol on calibration date t for fixed T=%s',num2str(inputStructure.T_normalized(k)));
     title(ttl);
     legend([s1;p1;p2], 'LV ATM real', 'LV ATM lin regr order1', 'LV ATM lin regr order3');
+    legend('boxoff');
     %% visualize regression stats  
  % plot residuals vs indep vars
     f2(k) = figure; f2(k).Visible = 'off'; f2(k).Tag = 'ATMonTime reg';
@@ -179,6 +191,16 @@ for k = 1:size(inputStructure.T_normalized, 2)
     title(ttl);
     legend(s5, 'Residuals');
     legend('boxoff');
+  % Normal distribution of residuals
+    fig(1) = figure; fig(1).Visible = 'off'; fig(1).Tag = 'ATMonTime reg';
+    fig = plotResiduals(mdl,'probability');
+    ttl = sprintf('Analysis: Proba plot of residuals, T=%s',num2str(inputStructure.T_normalized(k)));
+    title(ttl);
+  % Normal distribution of residuals 3rd order
+    fig(2) = figure; fig(2).Visible = 'off'; fig(2).Tag = 'ATMonTime reg';
+    fig = plotResiduals(mdl2,'probability');
+    ttl = sprintf('Analysis: Proba plot of residuals 3rd order, T=%s',num2str(inputStructure.T_normalized(k)));
+    title(ttl);    
 end;
 % Conclusion : sometimes negative coef of determination, bad fitting
 
@@ -241,16 +263,22 @@ for k = 1:size(inputStructure.T_normalized, 2)
     VolImpATM_ = VolImpATM(k,:);
     VolImpATM_ = VolImpATM_(sortedIndex);
     idxnan = isnan(LVATM_); %% find indices with non NAN values
-    [prmReg, rsquared, resid] = polynomialFitting(LVATM_(~idxnan),VolImpATM_(~idxnan),1);
-    [prmReg2, rsquared2, resid2] = polynomialFitting(LVATM_(~idxnan),VolImpATM_(~idxnan),3);
+    [prmReg, rsquared, resid, mdl] = polynomialFitting(LVATM_(~idxnan),VolImpATM_(~idxnan),1);
+    [prmReg2, rsquared2, resid2, mdl2] = polynomialFitting(LVATM_(~idxnan),VolImpATM_(~idxnan),3);
     paramReg(k,:) = prmReg;
     paramReg2(k,:) = prmReg2;
     rsq(k) = rsquared;
     rsq2(k) = rsquared2;
+    stat{k} = mdl;
+    stat2{k} = mdl2;
+    anov{k} = anova(mdl);
+    anov2{k} = anova(mdl2);
+    [pvaldw{k},DW{k}] = dwtest(mdl,'exact','both');
+    [pvaldw2{k},DW2{k}] = dwtest(mdl2,'exact','both');
     VolImpATM_model(k,:) = polyval(paramReg(k,:),LVATM_(~idxnan)); %% values obtained by model
     VolImpATM_model2(k,:) = polyval(paramReg2(k,:),LVATM_(~idxnan)); %% values obtained by model    
 
-    %% visualize regression results
+%% visualize regression results
     f7(k) = figure; f7(k).Visible = 'off'; f7(k).Tag = 'ATMonImplied reg';
     s1 = scatter(LVATM_(~idxnan),VolImpATM_(~idxnan));
     hold on
@@ -296,6 +324,16 @@ for k = 1:size(inputStructure.T_normalized, 2)
     title(ttl);
     legend(s5, 'Residuals');
     legend('boxoff');
+  % Normal distribution of residuals
+    figg(1) = figure; figg(1).Visible = 'off'; figg(1).Tag = 'ATMonTime reg';
+    fig = plotResiduals(mdl,'probability');
+    ttl = sprintf('Analysis: Proba plot of residuals, T=%s',num2str(inputStructure.T_normalized(k)));
+    title(ttl);
+  % Normal distribution of residuals 3rd order
+    figg(2) = figure; figg(2).Visible = 'off'; figg(2).Tag = 'ATMonTime reg';
+    fig = plotResiduals(mdl2,'probability');
+    ttl = sprintf('Analysis: Proba plot of residuals 3rd order, T=%s',num2str(inputStructure.T_normalized(k)));
+    title(ttl);    
 end;
 % Conclusion : sometimes negative coef of determination, bad fitting
 
@@ -401,10 +439,13 @@ for k = 1:size(inputStructure.T_normalized, 2)
     ttl = sprintf('Local vol on time models/true with predictions with fixed T=%s', num2str(inputStructure.T_normalized(k)));
     legend([s1;s2;s3], 'Local vol calibrated', 'Local vol modeled', 'Local vol modeled 3rd order');
     title(ttl);
+    legend('boxoff');
     
     subplot(2,1,2); 
     p1 = plot(datenum(Dates,'mm/dd/yyyy'), S);
     ylabel('Stcok Spot Price'); xlabel('Dates');  set(gca,'xtick',datenum(Dates,'mm/dd/yyyy')); set(gca,'FontSize',4); datetick('x',29,'keepticks');
+    legend('boxoff');
+    
     
     f14(k) = figure; f14(k).Visible = 'off'; f14(k).Tag = 'AggregatedPlots';
     subplot(2,1,1);
@@ -416,10 +457,12 @@ for k = 1:size(inputStructure.T_normalized, 2)
     ttl = sprintf('Implied vol on LocalVol models/true with predictions with fixed T=%s', num2str(inputStructure.T_normalized(k)));
     legend([s1;s2;s3], 'Imp vol calibrated', 'Imp vol modeled', 'Imp vol modeled 3rd order');
     title(ttl);
+    legend('boxoff');
     
     subplot(2,1,2); 
-    p1 = plot(datenum(Dates,'mm/dd/yyyy'), S/Stock_normalization_factor);
+    p1 = plot(datenum(Dates,'mm/dd/yyyy'), S);
     ylabel('Stock spot price'); xlabel('Dates');  set(gca,'xtick',datenum(Dates,'mm/dd/yyyy')); set(gca,'FontSize',4); datetick('x',29,'keepticks');
+    legend('boxoff');
 end;
 
 report('aggr0.rpt','-oReportAggregatedLVonDatesImp.rtf','-frtf');
