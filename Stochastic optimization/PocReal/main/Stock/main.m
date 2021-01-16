@@ -108,10 +108,12 @@ end;
 for i = 1:size(calibrationDates,2)
     f1(i) = figure; f1(i).Visible = 'off'; f1(i).Tag = 'Local Vol Surface';
     surf(inputStructure.K_normalized, inputStructure.T_normalized, squeeze(LVN(i,:,:)));
+    xlabel('Strike'); ylabel('Maturity T'); zlabel('Local vol');
     ttl = sprintf('Local volatility surface at t =%s i.e. t=%s', char(calibrationDates(i)), num2str(calibrationDatesNumeric(i)));
     title(ttl);
     f2(i) = figure; f2(i).Visible = 'off'; f2(i).Tag = 'Implied Vol Surface';
     surf(inputStructure.K_normalized, inputStructure.T_normalized, squeeze(VolImp(i,:,:)));
+    xlabel('Strike'); ylabel('Maturity T'); zlabel('Implied vol');
     ttl = sprintf('Implied volatility surface at t =%s i.e. t=%s', char(calibrationDates(i)), num2str(calibrationDatesNumeric(i)));
     title(ttl);    
 end;
@@ -148,8 +150,8 @@ for k = 1:size(inputStructure.T_normalized, 2)
     f1(k) = figure; f1(k).Visible = 'off'; f1(k).Tag = 'ATMonTime reg';
     s1 = scatter(calibrationDatesNumeric(~idxnan),LVATM_(~idxnan));
     hold on
-    p1 = plot(calibrationDatesNumeric(~idxnan),LVAMT_model(k,:)); xlabel('t'); ylabel('LVATM');
-    p2 = plot(calibrationDatesNumeric(~idxnan),LVAMT_model2(k,:)); xlabel('t'); ylabel('LVATM');
+    p1 = plot(calibrationDatesNumeric(~idxnan),LVAMT_model(k,:),'-s'); xlabel('t'); ylabel('LVATM');
+    p2 = plot(calibrationDatesNumeric(~idxnan),LVAMT_model2(k,:),'-d'); xlabel('t'); ylabel('LVATM');
     ttl = sprintf('Linear regressions of ATM Local Vol on calibration date t for fixed T=%s',num2str(inputStructure.T_normalized(k)));
     title(ttl);
     legend([s1;p1;p2], 'LV ATM real', 'LV ATM lin regr order1', 'LV ATM lin regr order3');
@@ -237,15 +239,17 @@ end;
  % Calculate MAE matrix
    diff_vld = (abs(LVATM_vld-LVATM_model_vld))./LVATM_vld;
    diff_vld2 = (abs(LVATM_vld-LVATM_model_vld2))./LVATM_vld;
-   MSE_vld = sum(sum(diff_vld(:,:)))/(size(diff_vld,1)*size(diff_vld,2));
-   MSE_vld2 = sum(sum(diff_vld2(:,:)))/(size(diff_vld2,1)*size(diff_vld2,2));
+for k = 1:size(inputStructure.T_normalized, 2)
+   MSE_vld(k) = sum(diff_vld(k,:))/size(diff_vld,2);
+   MSE_vld2(k) = sum(diff_vld2(k,:))/size(diff_vld2,2);
+end;
    %% visualize validation results valDate/localVol
 for l = 1:size(inputStructure.T_normalized, 2)
     f6(l) = figure; f6(l).Visible = 'off'; f6(l).Tag = 'ATMonTime reg';
     s1_v = scatter(1:size(validationDates,2), LVATM_vld(l,:));
     hold on
-    p1_v = plot(1:size(validationDates,2), LVATM_model_vld(l,:)); ylabel('local vol'); xlabel('validation Dates');
-    p2_v = plot(1:size(validationDates,2), LVATM_model_vld2(l,:)); ylabel('local vol'); xlabel('validation Dates');
+    p1_v = plot(1:size(validationDates,2), LVATM_model_vld(l,:), '-s'); ylabel('local vol'); xlabel('validation Dates');
+    p2_v = plot(1:size(validationDates,2), LVATM_model_vld2(l,:), '-d'); ylabel('local vol'); xlabel('validation Dates');
     ttl = sprintf('Validation: Lin regr of Local Vol(t) on Dates(t), fixed T=%s',num2str(inputStructure.T_normalized(k)));
     title(ttl);
     legend([s1_v;p1_v;p2_v], 'local vol real', 'local vol lin regr order1', 'local vol lin regr order3');
@@ -282,11 +286,12 @@ for k = 1:size(inputStructure.T_normalized, 2)
     f7(k) = figure; f7(k).Visible = 'off'; f7(k).Tag = 'ATMonImplied reg';
     s1 = scatter(LVATM_(~idxnan),VolImpATM_(~idxnan));
     hold on
-    p1 = plot(LVATM_(~idxnan),VolImpATM_model(k,:)); ylabel('impvol ATM'); xlabel('LVATM');
-    p2 = plot(LVATM_(~idxnan),VolImpATM_model2(k,:)); ylabel('impvol ATM'); xlabel('LVATM');
+    p1 = plot(LVATM_(~idxnan),VolImpATM_model(k,:),'-s'); ylabel('impvol ATM'); xlabel('LVATM');
+    p2 = plot(LVATM_(~idxnan),VolImpATM_model2(k,:),'-d'); ylabel('impvol ATM'); xlabel('LVATM');
     ttl = sprintf('Linear regressions of Implied vol(t) on ATM Local Vol(t) with fixed T=%s',num2str(inputStructure.T_normalized(k)));
     title(ttl);
     legend([s1;p1;p2], 'Implied vol real', 'Implied vol lin regr order1', 'Implied vol lin regr order3');
+    legend('boxoff');
      %% visualize regression stats  
  % plot residuals vs indep vars
     f8(k) = figure; f8(k).Visible = 'off'; f8(k).Tag = 'ATMonImplied reg';
@@ -383,8 +388,10 @@ end;
 % Calculate MAE matrix
 diff_vld = (abs(VolImpATM_vld-VolImpATM_model_vld))./VolImpATM_vld;
 diff_vld2 = (abs(VolImpATM_vld-VolImpATM_model_vld2))./VolImpATM_vld;
-MSE_vld = sum(sum(diff_vld(:,:)))/(size(diff_vld,1)*size(diff_vld,2));
-MSE_vld2 = sum(sum(diff_vld2(:,:)))/(size(diff_vld2,1)*size(diff_vld2,2));
+for k = 1:size(inputStructure.T_normalized, 2)
+    MSE_vld(k) = sum(diff_vld(k,:))/size(diff_vld,2);
+    MSE_vld2(k) = sum(diff_vld2(k,:))/size(diff_vld2,2);
+end;
  %% visualize validation results localVol/impliedVol
 for l = 1:size(inputStructure.T_normalized, 2)
     [LVATM_vld_, sortedIndex] = sort(LVATM_vld(k,:));
@@ -394,8 +401,8 @@ for l = 1:size(inputStructure.T_normalized, 2)
     f12(l) = figure; f12(l).Visible = 'off'; f12(l).Tag = 'ATMonImplied reg';
     s1_v = scatter(LVATM_vld_,VolImp_vld_);
     hold on
-    p1_v = plot(LVATM_vld_, VolImpATM_model_vld(l,:)); ylabel('implied vol'); xlabel('local vol');
-    p2_v = plot(LVATM_vld_, VolImpATM_model_vld2(l,:)); ylabel('implied vol'); xlabel('local vol');
+    p1_v = plot(LVATM_vld_, VolImpATM_model_vld(l,:),'-s'); ylabel('implied vol'); xlabel('local vol');
+    p2_v = plot(LVATM_vld_, VolImpATM_model_vld2(l,:), '-d'); ylabel('implied vol'); xlabel('local vol');
     ttl = sprintf('Validation: Lin regr of  Impied vol(t) on Local Vol(t), fixed T=%s',num2str(inputStructure.T_normalized(k)));
     title(ttl);
     legend([s1_v;p1_v;p2_v], 'local vol real', 'local vol lin regr order1', 'local vol lin regr order3');
@@ -431,10 +438,10 @@ for k = 1:size(inputStructure.T_normalized, 2)
 
     f13(k) = figure; f13(k).Visible = 'off'; f13(k).Tag = 'AggregatedPlots';
     subplot(2,1,1);
-    s1 = scatter(datenum(Dates,'mm/dd/yyyy'), localVOL);
+    s1 = scatter(datenum(Dates,'mm/dd/yyyy'), localVOL, 'o');
     hold on
-    s2 = scatter(datenum(Dates,'mm/dd/yyyy'), localVOLModel);
-    s3 = scatter(datenum(Dates,'mm/dd/yyyy'), localVOLModel2);    
+    s2 = plot(datenum(Dates,'mm/dd/yyyy'), localVOLModel, '-s');
+    s3 = plot(datenum(Dates,'mm/dd/yyyy'), localVOLModel2, '-d');    
     ylabel('Local Vol'); xlabel('Dates');  set(gca,'xtick',datenum(Dates,'mm/dd/yyyy')); set(gca,'FontSize',4); datetick('x',29,'keepticks');
     ttl = sprintf('Local vol on time models/true with predictions with fixed T=%s', num2str(inputStructure.T_normalized(k)));
     legend([s1;s2;s3], 'Local vol calibrated', 'Local vol modeled', 'Local vol modeled 3rd order');
@@ -451,8 +458,8 @@ for k = 1:size(inputStructure.T_normalized, 2)
     subplot(2,1,1);
     s1 = scatter(datenum(Dates,'mm/dd/yyyy'), impVOL);
     hold on
-    s2 = plot(datenum(Dates,'mm/dd/yyyy'), impVOLModel);
-    s3 = plot(datenum(Dates,'mm/dd/yyyy'), impVOLModel2);
+    s2 = plot(datenum(Dates,'mm/dd/yyyy'), impVOLModel,'-s');
+    s3 = plot(datenum(Dates,'mm/dd/yyyy'), impVOLModel2, '-d');
     ylabel('Imp Vol'); xlabel('Dates');  set(gca,'xtick',datenum(Dates,'mm/dd/yyyy')); set(gca,'FontSize',4); datetick('x',29,'keepticks');
     ttl = sprintf('Implied vol on LocalVol models/true with predictions with fixed T=%s', num2str(inputStructure.T_normalized(k)));
     legend([s1;s2;s3], 'Imp vol calibrated', 'Imp vol modeled', 'Imp vol modeled 3rd order');

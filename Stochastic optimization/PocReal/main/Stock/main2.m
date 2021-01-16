@@ -110,10 +110,12 @@ end;
 for i = 1:size(calibrationDates,2)
     f1(i) = figure; f1(i).Visible = 'off'; f1(i).Tag = 'Local Vol Surface';
     surf(inputStructure.K_normalized, inputStructure.T_normalized, squeeze(LVN(i,:,:)));
+    xlabel('Strike'); ylabel('Maturity T'); zlabel('Local vol');
     ttl = sprintf('Local volatility surface at t =%s i.e. t=%s', char(calibrationDates(i)), num2str(calibrationDatesNumeric(i)));
     title(ttl);
     f2(i) = figure; f2(i).Visible = 'off'; f2(i).Tag = 'Implied Vol Surface';
     surf(inputStructure.K_normalized, inputStructure.T_normalized, squeeze(VolImp(i,:,:)));
+    xlabel('Strike'); ylabel('Maturity T'); zlabel('Implied vol');
     ttl = sprintf('Implied volatility surface at t =%s i.e. t=%s', char(calibrationDates(i)), num2str(calibrationDatesNumeric(i)));
     title(ttl);    
 end;
@@ -149,8 +151,8 @@ for k = 1:size(inputStructure.T_normalized, 2)
     f1(k) = figure; f1(k).Visible = 'off'; f1(k).Tag = 'ATMonRealized reg';
     s1 = scatter(LVATM_(~idxnan), RelizedVol_(~idxnan));
     hold on
-    p1 = plot(LVATM_(~idxnan),RelizedVol_model(k,:)); ylabel('realized vol'); xlabel('LVATM');
-    p2 = plot(LVATM_(~idxnan),RelizedVol_model2(k,:)); ylabel('realized vol'); xlabel('LVATM');
+    p1 = plot(LVATM_(~idxnan),RelizedVol_model(k,:), '-s'); ylabel('realized vol'); xlabel('LVATM');
+    p2 = plot(LVATM_(~idxnan),RelizedVol_model2(k,:), '-d'); ylabel('realized vol'); xlabel('LVATM');
     ttl = sprintf('Linear regressions of Relized Vol(t) on ATM Local Vol(t) with fixed T=%s',num2str(inputStructure.T_normalized(k)));
     title(ttl);
     legend([s1;p1;p2], 'Realized vol real', 'Realized vol lin regr order1', 'Realized vol lin regr order3');
@@ -252,8 +254,8 @@ for k = 1:size(inputStructure.T_normalized, 2)
     f6(k) = figure; f6(k).Visible = 'off'; f6(k).Tag = 'ATMonRealized reg';
     s1_v = scatter(LVATM_vld_, realizedVol_vld_);
     hold on
-    p1_v = plot(LVATM_vld_, RealizedVol_model_vld_); ylabel('realized vol'); xlabel('LVATM');
-    p2_v = plot(LVATM_vld_, RealizedVol_model_vld2_); ylabel('realized vol'); xlabel('LVATM');
+    p1_v = plot(LVATM_vld_, RealizedVol_model_vld_, '-s'); ylabel('realized vol'); xlabel('LVATM');
+    p2_v = plot(LVATM_vld_, RealizedVol_model_vld2_, '-d'); ylabel('realized vol'); xlabel('LVATM');
     ttl = sprintf('Validation: Lin regr of Relized Vol(t) on ATM Local Vol(t), fixed T=%s',num2str(inputStructure.T_normalized(k)));
     title(ttl);
     legend([s1_v;p1_v;p2_v], 'Realized vol real', 'Realized vol lin regr order1', 'Realized vol lin regr order3');
@@ -264,8 +266,8 @@ for l = 1:size(inputStructure.T_normalized, 2)
     f7(l) = figure; f7(l).Visible = 'off'; f7(l).Tag = 'ATMonRealized reg';
     s1_v = scatter(1:size(validationDates,2), realizedVol_vld(l,:));
     hold on
-    p1_v = plot(1:size(validationDates,2), RealizedVol_model_vld(l,:)); ylabel('realized vol'); xlabel('validation Dates');
-    p2_v = plot(1:size(validationDates,2), RealizedVol_model_vld2(l,:)); ylabel('realized vol'); xlabel('validation Dates');
+    p1_v = plot(1:size(validationDates,2), RealizedVol_model_vld(l,:), '-s'); ylabel('realized vol'); xlabel('validation Dates');
+    p2_v = plot(1:size(validationDates,2), RealizedVol_model_vld2(l,:), '-d'); ylabel('realized vol'); xlabel('validation Dates');
     ttl = sprintf('Validation: Lin regr of Relized Vol(t) on ATM Local Vol(t), fixed T=%s',num2str(inputStructure.T_normalized(l)));
     title(ttl);
     legend([s1_v;p1_v;p2_v], 'Realized vol real', 'Realized vol lin regr order1', 'Realized vol lin regr order3');
@@ -275,8 +277,11 @@ end;
 % Calculate MAE matrix
 diff_vld = (abs(realizedVol_vld-RealizedVol_model_vld))./realizedVol_vld;
 diff_vld2 = (abs(realizedVol_vld-RealizedVol_model_vld2))./realizedVol_vld;
-MSE_vld = sum(sum(diff_vld(:,:)))/(size(diff_vld,1)*size(diff_vld,2));
-MSE_vld2 = sum(sum(diff_vld2(:,:)))/(size(diff_vld2,1)*size(diff_vld2,2));
+
+for l = 1:size(inputStructure.T_normalized, 2)
+    MSE_vld(l) = sum(diff_vld(l,:))/size(diff_vld,2);
+    MSE_vld2(l) = sum(diff_vld2(l,:))/size(diff_vld2,2);
+end;
 %% (3) Generate report
 report('3.rpt','-oReportRealized.rtf','-frtf');
 pause(7);
@@ -300,8 +305,8 @@ for k = 1:size(inputStructure.T_normalized, 2)
     subplot(2,1,1);
     s1 = scatter(datenum(Dates,'mm/dd/yyyy'), RealizedVOL);
     hold on
-    s2 = plot(datenum(Dates,'mm/dd/yyyy'), RealizedVOLModel);
-    s3 = plot(datenum(Dates,'mm/dd/yyyy'), RealizedVOLModel2);
+    s2 = plot(datenum(Dates,'mm/dd/yyyy'), RealizedVOLModel, '-s');
+    s3 = plot(datenum(Dates,'mm/dd/yyyy'), RealizedVOLModel2, '-d');
     ylabel('Realized Vol'); xlabel('Dates');  set(gca,'xtick',datenum(Dates,'mm/dd/yyyy')); set(gca,'FontSize',4); datetick('x',29,'keepticks');
     ttl = sprintf('Realized vol models/true with predictions with fixed T=%s', num2str(inputStructure.T_normalized(k)));
     legend([s1;s2;s3], 'Realized vol real', 'Realized vol modeled','Realized vol modeled 3rd order');

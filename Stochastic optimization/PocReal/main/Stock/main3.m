@@ -46,11 +46,11 @@ inputStructure.K_normalized = 100:5:230;
 
 Stock_normalization_factor = 1000;  % as price is around 100 (for affichage only)
 
-%calibrationDates = {'01/03/2020', '01/10/2020', '01/17/2020', '01/24/2020', '01/31/2020', '02/07/2020', '02/14/2020', '02/21/2020','02/28/2020', '03/06/2020'};
-%validationDates = { '03/13/2020', '03/20/2020', '03/27/2020', '04/03/2020', '04/09/2020', '04/17/2020'};
+calibrationDates = {'01/03/2020', '01/10/2020', '01/17/2020', '01/24/2020', '01/31/2020', '02/07/2020', '02/14/2020', '02/21/2020','02/28/2020', '03/06/2020'};
+validationDates = { '03/13/2020', '03/20/2020', '03/27/2020', '04/03/2020', '04/09/2020', '04/17/2020'};
 
-calibrationDates = {'01/03/2020', '01/10/2020', '01/24/2020', '01/31/2020', '02/07/2020',  '02/28/2020', '03/06/2020',  '03/20/2020', '03/27/2020', '04/03/2020'};
-validationDates = {'01/17/2020','02/14/2020', '02/21/2020', '03/13/2020', '04/09/2020', '04/17/2020'};
+%calibrationDates = {'01/03/2020', '01/10/2020', '01/24/2020', '01/31/2020', '02/07/2020',  '02/28/2020', '03/06/2020',  '03/20/2020', '03/27/2020', '04/03/2020'};
+%validationDates = {'01/17/2020','02/14/2020', '02/21/2020', '03/13/2020', '04/09/2020', '04/17/2020'};
 
 
 %% Prepare numeric calibration and validation dates
@@ -107,10 +107,12 @@ end;
 for i = 1:size(calibrationDates,2)
     f1(i) = figure; f1(i).Visible = 'off'; f1(i).Tag = 'Local Vol Surface';
     surf(inputStructure.K_normalized, inputStructure.T_normalized, squeeze(LVN(i,:,:)));
+    xlabel('Strike'); ylabel('Maturity T'); zlabel('Local vol');
     ttl = sprintf('Local volatility surface at t =%s i.e. t=%s', char(calibrationDates(i)), num2str(calibrationDatesNumeric(i)));
     title(ttl);
     f2(i) = figure; f2(i).Visible = 'off'; f2(i).Tag = 'Implied Vol Surface';
     surf(inputStructure.K_normalized, inputStructure.T_normalized, squeeze(VolImp(i,:,:)));
+    xlabel('Strike'); ylabel('Maturity T'); zlabel('Implied vol');
     ttl = sprintf('Implied volatility surface at t =%s i.e. t=%s', char(calibrationDates(i)), num2str(calibrationDatesNumeric(i)));
     title(ttl);    
 end;
@@ -133,7 +135,7 @@ RelizedVol_model = LVATM_*paramReg;
     f1(k) = figure; f1(k).Visible = 'off'; f1(k).Tag = 'ATMonRealized multivariate reg';
     s1 = scatter([1:size(calibrationDates,2)], RelizedVol_);
     hold on
-    p1 = plot([1:size(calibrationDates,2)],RelizedVol_model); ylabel('realized vol'); xlabel('calibration dates');
+    p1 = plot([1:size(calibrationDates,2)],RelizedVol_model, '-s'); ylabel('realized vol'); xlabel('calibration dates');
     ttl = sprintf('Multivariate linear regressions of Relized Vol(t) on ATM Local Vol(t)');
     title(ttl);
     legend([s1;p1], 'Realized vol real', 'Realized vol multivar lin regr order1');
@@ -208,7 +210,7 @@ MSE_vld = sum(sum(diff_vld(:,:)))/(size(diff_vld,1)*size(diff_vld,2));
     f5(1) = figure; f5(1).Visible = 'off'; f5(1).Tag = 'ATMonRealized multivariate reg';
     s1_v = scatter(1:size(validationDates,2), realizedVol_vld(1,:));
     hold on
-    p1_v = plot(1:size(validationDates,2), RealizedVol_model_vld_(1,:)); ylabel('realized vol'); xlabel('validation Dates');
+    p1_v = plot(1:size(validationDates,2), RealizedVol_model_vld_(1,:), '-s'); ylabel('realized vol'); xlabel('validation Dates');
     ttl = sprintf('Validation: Multivar regr of Relized Vol(t) on ATM Local Vol(t)');
     title(ttl);
     legend([s1_v;p1_v], 'Realized vol real', 'Realized vol multivar lin regr order1');
@@ -231,18 +233,19 @@ RealizedVOLModel = realizedVolModelUnsorted(sorted_index);
 
 f7 = figure; f7.Visible = 'off'; f7.Tag = 'AggregatedPlots';
 subplot(2,1,1);
-s1 = plot(datenum(Dates,'mm/dd/yyyy'), RealizedVOL);
+s1 = plot(datenum(Dates,'mm/dd/yyyy'), RealizedVOL, '-s');
 hold on
-s2 = plot(datenum(Dates,'mm/dd/yyyy'), RealizedVOLModel);
+s2 = plot(datenum(Dates,'mm/dd/yyyy'), RealizedVOLModel, '-d');
 
 ylabel('Realized Vol'); xlabel('Dates');  set(gca,'xtick',datenum(Dates,'mm/dd/yyyy')); set(gca,'FontSize',4); datetick('x',29,'keepticks');
 ttl = sprintf('Realized vol models/true with predictions');
 legend([s1;s2], 'Realized vol real', 'Realized vol modeled');
+legend('boxoff');
 title(ttl);
 subplot(2,1,2);
 p1 = plot(datenum(Dates,'mm/dd/yyyy'), S);
 ylabel('Spot Stock price'); xlabel('Dates');  set(gca,'xtick',datenum(Dates,'mm/dd/yyyy')); set(gca,'FontSize',4); datetick('x',29,'keepticks');
-
+legend('boxoff');
 report('aggr.rpt','-oReportAggregatedRealVolMultivar.rtf','-frtf');
 pause(7);
 
