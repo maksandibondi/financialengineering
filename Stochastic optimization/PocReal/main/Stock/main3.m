@@ -46,11 +46,11 @@ inputStructure.K_normalized = 100:5:230;
 
 Stock_normalization_factor = 1000;  % as price is around 100 (for affichage only)
 
-calibrationDates = {'01/03/2020', '01/10/2020', '01/17/2020', '01/24/2020', '01/31/2020', '02/07/2020', '02/14/2020', '02/21/2020','02/28/2020', '03/06/2020'};
-validationDates = { '03/13/2020', '03/20/2020', '03/27/2020', '04/03/2020', '04/09/2020', '04/17/2020'};
+%calibrationDates = {'01/03/2020', '01/10/2020', '01/17/2020', '01/24/2020', '01/31/2020', '02/07/2020', '02/14/2020', '02/21/2020','02/28/2020', '03/06/2020'};
+%validationDates = { '03/13/2020', '03/20/2020', '03/27/2020', '04/03/2020', '04/09/2020', '04/17/2020'};
 
-%calibrationDates = {'01/03/2020', '01/10/2020', '01/24/2020', '01/31/2020', '02/07/2020',  '02/28/2020', '03/06/2020',  '03/20/2020', '03/27/2020', '04/03/2020'};
-%validationDates = {'01/17/2020','02/14/2020', '02/21/2020', '03/13/2020', '04/09/2020', '04/17/2020'};
+calibrationDates = {'01/03/2020', '01/10/2020', '01/24/2020', '01/31/2020', '02/07/2020',  '02/28/2020', '03/06/2020',  '03/20/2020', '03/27/2020', '04/03/2020'};
+validationDates = {'01/17/2020','02/14/2020', '02/21/2020', '03/13/2020', '04/09/2020', '04/17/2020'};
 
 
 %% Prepare numeric calibration and validation dates
@@ -125,12 +125,15 @@ pause(7);
 %% (3) Regress (multivariate) ATM Local Volatility on realized T volatility of S for FIXED maturity for all calib dates
 RelizedVol_ = realizedVol(:,end); % last value of realized vol
 LVATM_ = LVATM(:,:)';
-[paramReg, sigma, E,CovB,logL] = mvregress(LVATM_, RelizedVol_); %E = 10*1, sigma = 0,027,
+%[paramReg, sigma, E,CovB,logL] = mvregress(LVATM_, RelizedVol_); %E = 10*1, sigma = 0,027,
 %model = sprintf('poly%d',1);
 mdl = fitlm(LVATM_,RelizedVol_);
+paramReg=mdl.Coefficients.Estimate;
+coefs=mdl.Coefficients;
+rsq = mdl.Rsquared;
 manov = anova(mdl);
 
-RelizedVol_model = LVATM_*paramReg;
+RelizedVol_model = LVATM_*paramReg(2:end)+paramReg(1);
  %% visualize regression results
     f1(k) = figure; f1(k).Visible = 'off'; f1(k).Tag = 'ATMonRealized multivariate reg';
     s1 = scatter([1:size(calibrationDates,2)], RelizedVol_);
@@ -143,13 +146,11 @@ RelizedVol_model = LVATM_*paramReg;
  %% visualize regression stats
  % plot histogram of residuals
  f4 = figure; f4.Visible = 'off'; f4.Tag = 'ATMonRealized multivariate reg';
- s4 = histogram(E',10);
+ s4 = plotResiduals(mdl,'histogram');
  ylabel('frequency'); xlabel('residuals');
  hold on
  ttl = sprintf('Analysis: Histogram of residuals');
  title(ttl);
- legend(s4, 'Residuals');
- legend('boxoff');
  
  % Normal distribution of residuals
  fig(2) = figure; fig(2).Visible = 'off'; fig(2).Tag = 'ATMonRealized multivariate reg';
@@ -183,7 +184,7 @@ for k = 1:size(inputStructure.T_normalized, 2)
 end;
 
 % calculate model values
-RealizedVol_model_vld = LVATM_vld(:,:)'*paramReg;
+RealizedVol_model_vld = LVATM_vld(:,:)'*paramReg(2:end) + paramReg(1);
 
 % Calculate MAE matrix
 diff_vld = (abs(realizedVol_vld(:,end)-RealizedVol_model_vld))./realizedVol_vld(:,end);
