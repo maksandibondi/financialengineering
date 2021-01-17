@@ -46,11 +46,11 @@ inputStructure.K_normalized = 100:5:230;
 
 Stock_normalization_factor = 1000;  % as price is around 100 (for affichage only)
 
-calibrationDates = {'01/03/2020', '01/10/2020', '01/17/2020', '01/24/2020', '01/31/2020', '02/07/2020', '02/14/2020', '02/21/2020','02/28/2020', '03/06/2020'};
-validationDates = { '03/13/2020', '03/20/2020', '03/27/2020', '04/03/2020', '04/09/2020', '04/17/2020'};
+%calibrationDates = {'01/03/2020', '01/10/2020', '01/17/2020', '01/24/2020', '01/31/2020', '02/07/2020', '02/14/2020', '02/21/2020','02/28/2020', '03/06/2020'};
+%validationDates = { '03/13/2020', '03/20/2020', '03/27/2020', '04/03/2020', '04/09/2020', '04/17/2020'};
 
-%calibrationDates = {'01/03/2020', '01/10/2020', '01/24/2020', '01/31/2020', '02/07/2020',  '02/28/2020', '03/06/2020',  '03/20/2020', '03/27/2020', '04/03/2020'};
-%validationDates = {'01/17/2020','02/14/2020', '02/21/2020', '03/13/2020', '04/09/2020', '04/17/2020'};
+calibrationDates = {'01/03/2020', '01/10/2020', '01/24/2020', '01/31/2020', '02/07/2020',  '02/28/2020', '03/06/2020',  '03/20/2020', '03/27/2020', '04/03/2020'};
+validationDates = {'01/17/2020','02/14/2020', '02/21/2020', '03/13/2020', '04/09/2020', '04/17/2020'};
 
 
 %% Prepare numeric calibration and validation dates
@@ -123,7 +123,7 @@ pause(7);
 
 
 %% (3) Regress (multivariate) ATM Local Volatility on realized T volatility of S for FIXED maturity for all calib dates
-RelizedVol_ = realizedVol(:,end); % last value of realized vol
+RelizedVol_ = realizedVol(:,1); % last value of realized vol
 LVATM_ = LVATM(:,:)';
 [paramReg, sigma, E,CovB,logL] = mvregress(LVATM_, RelizedVol_); %E = 10*1, sigma = 0,027,
 %model = sprintf('poly%d',1);
@@ -186,7 +186,7 @@ end;
 RealizedVol_model_vld = LVATM_vld(:,:)'*paramReg;
 
 % Calculate MAE matrix
-diff_vld = (abs(realizedVol_vld(:,end)-RealizedVol_model_vld))./realizedVol_vld(:,end);
+diff_vld = (abs(realizedVol_vld(:,1)-RealizedVol_model_vld))./realizedVol_vld(:,1);
 MSE_vld = sum(sum(diff_vld(:,:)))/(size(diff_vld,1)*size(diff_vld,2));
 %% visualize validation results valDate/realVol
     RealizedVol_model_vld_ = RealizedVol_model_vld';
@@ -205,7 +205,7 @@ pause(7);
 %% Visualize stock price and aggregated plots of validation/calibration values
 S_unsorted = [S0, S0_v];
 Dates_unsorted = [calibrationDates, validationDates];
-realizedVolUnsorted = [transp(realizedVol(:,end)), transp(realizedVol_vld(:,end))];
+realizedVolUnsorted = [transp(realizedVol(:,1)), transp(realizedVol_vld(:,1))];
 realizedVolModelUnsorted = [RelizedVol_model', RealizedVol_model_vld'];
 
 [DatesNumeric, sorted_index] = sort([calibrationDatesNumeric, validationDatesNumeric]);

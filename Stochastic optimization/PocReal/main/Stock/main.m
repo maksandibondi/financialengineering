@@ -52,11 +52,11 @@ inputStructure.K_normalized = 100:5:230;
 
 Stock_normalization_factor = 1000;  % as price is around 100 (for affichage only)
 
-%calibrationDates = {'01/03/2020', '01/10/2020', '01/17/2020', '01/24/2020', '01/31/2020', '02/07/2020', '02/14/2020', '02/21/2020','02/28/2020', '03/06/2020'};
-%validationDates = { '03/13/2020', '03/20/2020', '03/27/2020', '04/03/2020', '04/09/2020', '04/17/2020'};
+calibrationDates = {'01/03/2020', '01/10/2020', '01/17/2020', '01/24/2020', '01/31/2020', '02/07/2020', '02/14/2020', '02/21/2020','02/28/2020', '03/06/2020'};
+validationDates = { '03/13/2020', '03/20/2020', '03/27/2020', '04/03/2020', '04/09/2020', '04/17/2020'};
 
-calibrationDates = {'01/03/2020', '01/10/2020', '01/24/2020', '01/31/2020', '02/07/2020',  '02/28/2020', '03/06/2020',  '03/20/2020', '03/27/2020', '04/03/2020'};
-validationDates = {'01/17/2020','02/14/2020', '02/21/2020', '03/13/2020', '04/09/2020', '04/17/2020'};
+%calibrationDates = {'01/03/2020', '01/10/2020', '01/24/2020', '01/31/2020', '02/07/2020',  '02/28/2020', '03/06/2020',  '03/20/2020', '03/27/2020', '04/03/2020'};
+%validationDates = {'01/17/2020','02/14/2020', '02/21/2020', '03/13/2020', '04/09/2020', '04/17/2020'};
 
 %% Prepare numeric calibration and validation dates
 calibrationDatesNumeric(1) = 0;
@@ -330,12 +330,12 @@ for k = 1:size(inputStructure.T_normalized, 2)
     legend(s5, 'Residuals');
     legend('boxoff');
   % Normal distribution of residuals
-    figg(1) = figure; figg(1).Visible = 'off'; figg(1).Tag = 'ATMonTime reg';
+    figg(1) = figure; figg(1).Visible = 'off'; figg(1).Tag = 'ATMonImplied reg';
     fig = plotResiduals(mdl,'probability');
     ttl = sprintf('Analysis: Proba plot of residuals, T=%s',num2str(inputStructure.T_normalized(k)));
     title(ttl);
   % Normal distribution of residuals 3rd order
-    figg(2) = figure; figg(2).Visible = 'off'; figg(2).Tag = 'ATMonTime reg';
+    figg(2) = figure; figg(2).Visible = 'off'; figg(2).Tag = 'ATMonImplied reg';
     fig = plotResiduals(mdl2,'probability');
     ttl = sprintf('Analysis: Proba plot of residuals 3rd order, T=%s',num2str(inputStructure.T_normalized(k)));
     title(ttl);    
