@@ -18,7 +18,20 @@ if (strcmp(discretizationType, 'uniform'))
     for i = 1:disc_T 
         if (strcmp(interpTypeK, 'bspline'))
             order = 4;
-            sigma_temp(i,:) = Bspline(knotsK,ctrlpts(i,:), order, ptsToEvalK);
+            sigma_temp(i,:) = Bspline(knotsK,ctrlpts(i,:), order, ptsToEvalK); 
+            %sigma_temp(i,:) = interp1(knotsK, ctrlpts(i,:), ptsToEvalK, 'pchip');
+            %sigma_temp(i,:) = BsplineMama(knotsK,ctrlpts(i,:), ptsToEvalK);
+%         if (sigma_temp(i,20) ~= 0)
+%             plot([1:46],sigma_temp(i,:));
+%         end
+%             x = knotsK; v = ctrlpts(i,:); xq=ptsToEvalK;
+%             vq2 = interp1(x,v,xq,'spline');
+%             hold on
+%             plot(x,v,'o',xq,vq2,':.');
+%             %xlim([0 2*pi]);
+%             title('Spline Interpolation');
+%         end
+
         else
             sigma_temp(i,:) = interp1(knotsK, ctrlpts(i,:), ptsToEvalK, interpTypeK);
         end;

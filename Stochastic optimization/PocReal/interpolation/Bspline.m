@@ -6,17 +6,25 @@ sz2 = size(ptsToEval,2);
 
 
 %% Uniform knots
-iter = 1;
+%iter = 1;
 for i = 1:sz2 % iterate through points where interpolate
+  if (ismember(ptsToEval(i),knots))
+      index = find(knots==ptsToEval(i));
+      res(i) = ctrlpts(index);
+      continue;
+  end;
+  
   spl = 0;
   for m = 3:sz-2
     cspline = BSplineCoefUniform(knots,ptsToEval(i),m);
     spl = spl + cspline*ctrlpts(m);
   end;
-  res(iter) = spl;
-  iter=iter+1;
+  res(i) = spl;
 end;
 
+% if (res(20) ~= 0)
+%      plot(ptsToEval,res(:));
+% end
 
 % %% Non-uniform knots
 % iter = 1;
